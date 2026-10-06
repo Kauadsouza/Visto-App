@@ -30,7 +30,9 @@ export default function RootLayout() {
               contentStyle: { backgroundColor: cores.fundo },
               animation: 'slide_from_right',
             }}
-          />
+          >
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
         </GuardaRota>
       </SafeAreaProvider>
     </GestureHandlerRootView>
