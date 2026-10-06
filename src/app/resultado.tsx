@@ -2,10 +2,11 @@ import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronRight, Info } from 'lucide-react-native';
+import { ChevronRight, Info, TriangleAlert } from 'lucide-react-native';
 
 import { Cabecalho } from '@/components/Cabecalho';
 import { avisoComplementares, diagnosticar, type Rota } from '@/lib/diagnostico';
+import { AVISO_CUSTOS } from '@/lib/planos';
 import { corViabilidade, cores, rotuloViabilidade } from '@/theme';
 import { useQuestionario } from '@/store/questionario';
 
@@ -76,6 +77,13 @@ export default function Resultado() {
         <Text className="mt-2 text-xs uppercase tracking-widest text-texto-3">
           {`${resultado.rotas.length} caminhos para o seu perfil`}
         </Text>
+
+        <View className="mt-3 flex-row rounded-xl border border-atencao/40 bg-atencao/10 p-4">
+          <TriangleAlert size={16} color={cores.atencao} className="mt-0.5" />
+          <Text className="ml-3 flex-1 text-xs leading-5 text-texto-2">
+            {AVISO_CUSTOS}
+          </Text>
+        </View>
 
         {resultado.rotas.map((rota) => (
           <CardRota key={rota.slug} rota={rota} />

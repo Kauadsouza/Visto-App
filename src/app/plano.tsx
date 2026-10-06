@@ -6,10 +6,11 @@ import { CalendarDays, Check, Lock } from 'lucide-react-native';
 
 import { Botao } from '@/components/Botao';
 import { Cabecalho } from '@/components/Cabecalho';
+import { TriangleAlert } from 'lucide-react-native';
 import { diagnosticar } from '@/lib/diagnostico';
 import type { ItemPlano } from '@/lib/database.types';
 import { calcularContador, emAnos, PAISES_SCHENGEN } from '@/lib/permissoes';
-import { agruparPorFase, itensDaRota, moeda } from '@/lib/planos';
+import { agruparPorFase, AVISO_CUSTOS, itensDaRota, moeda } from '@/lib/planos';
 import { ITENS_FREE, temAcesso, usePlano } from '@/store/plano';
 import { useQuestionario } from '@/store/questionario';
 import { cores } from '@/theme';
@@ -62,6 +63,15 @@ export default function Plano() {
             className="h-full rounded-full bg-verde"
             style={{ width: `${percentual}%` }}
           />
+        </View>
+
+        {/* Aviso de estimativa fica acima do checklist: os valores não podem
+            parecer oficiais em momento algum. */}
+        <View className="mt-6 flex-row rounded-xl border border-atencao/40 bg-atencao/10 p-4">
+          <TriangleAlert size={17} color={cores.atencao} className="mt-0.5" />
+          <Text className="ml-3 flex-1 text-xs leading-5 text-texto-2">
+            {AVISO_CUSTOS}
+          </Text>
         </View>
 
         {/* Índice global do item, para o paywall valer sobre a lista inteira —

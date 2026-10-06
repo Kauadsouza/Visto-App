@@ -63,6 +63,11 @@ const DINHEIRO: Record<string, number> = {
 };
 
 /** Rotas do MVP. Nada além destas três é oferecida. */
+/**
+ * ⚠️ Custos e prazos abaixo são ESTIMATIVAS, não tabelas oficiais.
+ * Mesma ressalva do checklist em src/lib/planos.ts — valide contra UKVI e
+ * consulado espanhol antes de publicar. Ver AVISO_CUSTOS lá.
+ */
 const BASE: Record<string, Omit<Rota, 'viabilidade' | 'resumo'>> = {
   'reino-unidos-estudo': {
     slug: 'reino-unidos-estudo',

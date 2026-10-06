@@ -17,6 +17,34 @@
 
 import type { FasePlano, ItemPlano } from '@/lib/database.types';
 
+/**
+ * =============================================================
+ * ⚠️  OS CUSTOS AQUI SÃO ESTIMATIVAS, NÃO TABELAS OFICIAIS.
+ * =============================================================
+ *
+ * Os valores de custo e prazo foram escritos a partir de referências gerais
+ * de mercado. NÃO vieram de tabela de consulado, nem de fonte oficial, e não
+ * foram conferidos item por item. Antes de publicar na Play Store eles
+ * precisam ser validados contra as fontes primárias:
+ *
+ *   · UKVI — https://www.gov.uk/visas-immigration  (Student visa, CAS, Biometrics)
+ *   · Consulado Geral da Espanha em Brasília — taxas e documentos por tipo
+ *   · covariantes: câmbio, preço de tradução juramentada, seguros
+ *
+ * Servem para a pessoa ter ordem de grandeza e comparar rotas. Não servem
+ * para decidir se tem dinheiro suficiente.
+ *
+ * O texto do aviso mora aqui para que código e tela nunca discordem sobre
+ * ele — mudar um, muda os dois.
+ */
+export const CUSTOS_SAO_ESTIMATIVAS = true;
+
+export const AVISO_CUSTOS =
+  'Custos e prazos são estimativas educacionais, baseadas em referências ' +
+  'gerais de mercado. Não vieram de tabela oficial de consulado e não foram ' +
+  'conferidos item a item. Confirme cada valor na fonte oficial antes de ' +
+  'decidir por eles.';
+
 type ItemBruto = Omit<ItemPlano, 'custo'> & { custo: number };
 
 export const FASES: { id: FasePlano; nome: string }[] = [

@@ -1,14 +1,16 @@
-import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, Linking, Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, CreditCard } from 'lucide-react-native';
+import { Check, CreditCard, ExternalLink, Info } from 'lucide-react-native';
 
 import { Botao } from '@/components/Botao';
 import { Cabecalho } from '@/components/Cabecalho';
-import { MODO_SEM_BACKEND, PRECO_MENSAL } from '@/lib/config';
+import { PRECO_MENSAL } from '@/lib/config';
 import { temAcesso, usePlano } from '@/store/plano';
 import { cores } from '@/theme';
+
+const LINK_STRIPE = process.env.EXPO_PUBLIC_STRIPE_PAYMENT_LINK;
 
 const BENEFICIOS = [
   'Checklist completo com prazos e custos de cada etapa',
@@ -17,34 +19,58 @@ const BENEFICIOS = [
   'Cancelamento a qualquer momento, direto no app',
 ];
 
+type Retorno = 'nenhum' | 'voltou' | 'abriu';
+
 export default function Pagamento() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { assinatura, ativarAssinaturaDemo, cancelarAssinatura } = usePlano();
 
   const [processando, setProcessando] = useState(false);
-  const assinado = temAcesso(assinatura);
+  const [retorno, setRetorno] = useState<Retorno>('nenhum');
 
-  // =============================================================
-  // SEM BACKEND: ativa localmente, sem cobrar ninguém.
-  //
-  // Quando o Stripe entrar (Etapa 7), este bloco vira:
-  //   1. Linking.openURL(CHECKOUT_URL) abrindo o checkout hospedado
-  //   2. polling na tabela `assinaturas` a cada 5s, timeout 60s
-  //   3. status = 'ativa' libera o plano
-  //
-  // O status passa a vir do servidor — nunca é o app que escreve 'ativa'.
-  // =============================================================
+  const assinado = temAcesso(assinatura);
+  const linkConfigurado = Boolean(LINK_STRIPE && LINK_STRIPE.startsWith('https://'));
+
+  // Observa a ida e a volta do navegador.
+  const indoParaOFora = useRef(false);
+  useEffect(() => {
+    const onChange = AppState.addEventListener('change', (estado) => {
+      if (estado === 'active' && indoParaOFora.current) {
+        indoParaOFora.current = false;
+        setRetorno('voltou');
+      }
+      if (estado === 'inactive') indoParaOFora.current = true;
+    });
+    return () => onChange.remove();
+  }, []);
+
+  /**
+   * Abre o Payment Link do Stripe no navegador.
+   *
+   * Sem backend, o app NÃO consegue confirmar que o pagamento foi aprovado:
+   * quem saberia disso é o Stripe ou uma Edge Function que consultasse a
+   * assinatura. Por isso a tela abaixo diz isso na cara, em vez de fingir que
+   * liberou.
+   */
   async function assinar() {
-    setProcessando(true);
-    if (MODO_SEM_BACKEND) {
-      await new Promise((r) => setTimeout(r, 900));
+    if (!linkConfigurado) {
+      setProcessando(true);
+      await new Promise((r) => setTimeout(r, 800));
       ativarAssinaturaDemo();
       setProcessando(false);
       router.replace('/plano');
       return;
     }
-    setProcessando(false);
+
+    try {
+      await Linking.openURL(LINK_STRIPE!);
+      indoParaOFora.current = true;
+      setRetorno('abriu');
+    } catch {
+      setRetorno('nenhum');
+      setProcessando(false);
+    }
   }
 
   return (
@@ -86,6 +112,34 @@ export default function Pagamento() {
           ))}
         </View>
 
+        {/* Estado depois de voltar do Stripe. */}
+        {retorno === 'voltou' ? (
+          <View className="mt-8 rounded-2xl border border-atencao/40 bg-atencao/10 p-5">
+            <View className="flex-row items-center">
+              <Info size={17} color={cores.atencao} />
+              <Text className="ml-2 flex-1 text-sm font-semibold text-texto">
+                Você voltou do Stripe
+              </Text>
+            </View>
+
+            <Text className="mt-2 text-sm leading-6 text-texto-2">
+              O app ainda não consegue confirmar o pagamento sozinho. A
+              verificação automática precisa de um servidor (Edge Function), que
+              é a fase 2. Se você já pagou, seu acesso é liberado assim que
+              existir.
+            </Text>
+
+            <Pressable
+              onPress={() => router.replace('/plano')}
+              className="mt-4 py-2"
+            >
+              <Text className="text-sm font-semibold text-verde">
+                Voltar para o meu plano
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         {assinado ? (
           <View className="mt-8 rounded-2xl border border-verde/40 bg-verde/5 p-5">
             <Text className="text-base font-semibold text-texto">
@@ -96,7 +150,6 @@ export default function Pagamento() {
                 ? `Renova em ${new Date(assinatura.currentPeriodEnd).toLocaleDateString('pt-BR')}.`
                 : 'Sem data de renovação definida.'}
             </Text>
-
             <Botao
               titulo="Cancelar assinatura"
               variante="secundario"
@@ -106,22 +159,35 @@ export default function Pagamento() {
           </View>
         ) : (
           <Botao
-            titulo={`Assinar por ${PRECO_MENSAL}`}
+            titulo={
+              linkConfigurado
+                ? `Assinar por ${PRECO_MENSAL}`
+                : `Assinar por ${PRECO_MENSAL} (modo demo)`
+            }
             onPress={assinar}
             carregando={processando}
+            disabled={retorno === 'voltou'}
             className="mt-8"
           />
         )}
 
-        {MODO_SEM_BACKEND ? (
+        {linkConfigurado ? (
+          <View className="mt-5 flex-row rounded-xl border border-borda bg-superficie p-4">
+            <ExternalLink size={16} color={cores.texto3} className="mt-0.5" />
+            <Text className="ml-3 flex-1 text-xs leading-5 text-texto-2">
+              O pagamento acontece na página segura do Stripe, fora do app. Você
+              volta aqui em seguida.
+            </Text>
+          </View>
+        ) : (
           <View className="mt-5 flex-row rounded-xl border border-atencao/40 bg-atencao/10 p-4">
             <CreditCard size={16} color={cores.atencao} className="mt-0.5" />
             <Text className="ml-3 flex-1 text-xs leading-5 text-texto-2">
-              Modo de desenvolvimento: nada é cobrado. O botão ativa a assinatura
-              só neste aparelho. O Stripe entra na Etapa 7.
+              Sem Payment Link configurado, nada é cobrado: o botão ativa o
+              acesso só neste aparelho, para você testar o app.
             </Text>
           </View>
-        ) : null}
+        )}
 
         <Text className="mt-6 pb-8 text-xs leading-5 text-texto-3">
           Ao assinar você concorda com os termos de uso e a política de
