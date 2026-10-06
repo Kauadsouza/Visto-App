@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AlertTriangle } from 'lucide-react-native';
 
 import { Botao } from '@/components/Botao';
+import { MODO_SEM_BACKEND } from '@/lib/config';
 import { mensagemDe } from '@/lib/erros';
 import { erroConfigSupabase } from '@/lib/supabase';
 import { useAuth } from '@/store/auth';
@@ -189,7 +190,26 @@ export default function Auth() {
         </Pressable>
 
         <View className="mt-auto pt-8">
-          <Text className="text-center text-sm text-texto-2">
+          {MODO_SEM_BACKEND ? (
+            <>
+              <Pressable
+                onPress={() => router.replace('/questionario')}
+                disabled={ocupado}
+                className="mb-6 items-center rounded-xl border border-borda py-4 active:opacity-80"
+              >
+                <Text className="text-sm font-semibold text-texto-2">
+                  Continuar sem conta
+                </Text>
+              </Pressable>
+
+              <Text className="text-center text-xs leading-5 text-texto-3">
+                Modo de desenvolvimento: sem Supabase, o app funciona só com
+                estado local e nada é salvo na nuvem.
+              </Text>
+            </>
+          ) : null}
+
+          <Text className="mt-4 text-center text-sm text-texto-2">
             {modo === 'entrar' ? 'Ainda não tem conta?' : 'Já tem conta?'}
           </Text>
           <Pressable
