@@ -18,7 +18,7 @@ const SEM_LOGIN = ['onboarding', 'auth'] as const;
  * onboarding e auth, e o resto passa a exigir login.
  */
 const AREA_PUBLICA: readonly string[] = MODO_SEM_BACKEND
-  ? [...SEM_LOGIN, 'questionario', 'resultado', 'plano', 'pagamento', 'como-funciona', 'consultoria', 'conta', '(tabs)']
+  ? [...SEM_LOGIN, 'questionario', 'resultado', 'plano', 'pagamento', 'como-funciona', 'consultoria', 'conta', '(tabs)', 'index']
   : SEM_LOGIN;
 
 /**
