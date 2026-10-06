@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { diagnosticar } from './diagnostico.ts';
+import { diagnosticar, TABELA_CUSTOS } from './diagnostico.ts';
 import { RESPOSTAS_VAZIAS, type Respostas } from './perguntas.ts';
 
 const POR_DEFINICAO: Respostas = {
@@ -152,5 +152,56 @@ test('toda rota tem custo e prazo consistentes', () => {
     assert.ok(rota.custoMax > rota.custoMin, `${rota.slug} com custo máximo menor`);
     assert.ok(rota.tempoMeses[1] >= rota.tempoMeses[0], `${rota.slug} com prazo invertido`);
     assert.ok(rota.passos.length > 0, `${rota.slug} sem passos`);
+  }
+});
+// ---------- Tabela de custos ----------
+
+test('toda chave usada no checklist existe na tabela de custos', async () => {
+  // Import dinâmico: planos.ts importa diagnostico.ts, então importar aqui em
+  // cima já funciona, mas o dinâmico deixa o ciclo explícito no teste.
+  const { chavesUsadas } = await import('./planos.ts');
+  const desconhecidas = chavesUsadas().filter(
+    (c) => c !== 'zero' && !(c in TABELA_CUSTOS)
+  );
+
+  assert.deepEqual(
+    desconhecidas,
+    [],
+    `chaves sem entrada na tabela: ${desconhecidas.join(', ')}`
+  );
+});
+
+test('cada rota tem entre 5 e 12 itens, como o MVP pede', async () => {
+  const { itensDaRota } = await import('./planos.ts');
+
+  for (const slug of ['reino-unidos-estudo', 'espanha-estudo', 'espanha-digital-nomad']) {
+    const n = itensDaRota(slug).length;
+    assert.ok(n >= 5 && n <= 12, `${slug} tem ${n} itens`);
+  }
+});
+
+test('nenhum custo é negativo e todo item tem prazo', async () => {
+  const { itensDaRota } = await import('./planos.ts');
+
+  for (const slug of ['reino-unidos-estudo', 'espanha-estudo', 'espanha-digital-nomad']) {
+    for (const item of itensDaRota(slug)) {
+      assert.ok(item.custo >= 0, `${slug}/${item.titulo} com custo negativo`);
+      assert.ok(item.prazo.trim().length > 0, `${slug}/${item.titulo} sem prazo`);
+      assert.ok(item.descricao.trim().length > 0, `${slug}/${item.titulo} sem descrição`);
+    }
+  }
+});
+
+test('todo custo tem fonte declarada', () => {
+  for (const [chave, custo] of Object.entries(TABELA_CUSTOS)) {
+    assert.ok(custo.fonte.trim().length > 0, `${chave} sem fonte`);
+    assert.ok(
+      ['nao-verificada', 'em-duvida', 'verificada'].includes(custo.status),
+      `${chave} com status inválido: ${custo.status}`
+    );
+    // Se está verificada, tem data. Sem data, não pode claimar verificação.
+    if (custo.status === 'verificada') {
+      assert.match(custo.verificadoEm ?? '', /^\d{4}-\d{2}-\d{2}$/, `${chave} verificada sem data`);
+    }
   }
 });

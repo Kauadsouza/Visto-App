@@ -64,16 +64,232 @@ const DINHEIRO: Record<string, number> = {
 
 /** Rotas do MVP. Nada além destas três é oferecida. */
 /**
+ * =============================================================
+ * TABELA DE CUSTOS — fonte e data de verificação
+ * =============================================================
+ *
+ * ESTE É O ARQUIVO PARA EDITAR QUANDO VALIDAR UM VALOR.
+ *
+ * Tudo que aparece como "custo estimado" no app sai daqui. Cada valor tem
+ * a fonte onde ele deve ser conferido e o status da conferência. Quando
+ * validar, é só trocar `status` para 'verificada' e preencher
+ * `verificadoEm`. Nada mais precisa mudar: o checklist em
+ * `src/lib/planos.ts` lê os valores desta tabela.
+ *
+ * -------------------------------------------------------------
+ * ⚠️  NENHUM VALOR AQUI FOI CONFERIDO CONTRA FONTE OFICIAL.
+ * -------------------------------------------------------------
+ * Todos os números foram estimados em 05/10/2026 por referência geral de
+ * mercado. Nenhum foi lido de tabela de consulado. Usuários decidem
+ * dinheiro da vida real com esses números, então eles precisam ser
+ * conferidos antes de publicar.
+ *
+ * Conversão usada nas estimativas: 1 GBP ≈ R$ 6,30; 1 EUR ≈ R$ 6,10.
+ * Essas taxas também envelhecem — reconferir junto com cada valor.
+ *
+ * status:
+ *   'nao-verificada' — número estimado, nunca conferido
+ *   'em-duvida'      — conferido, mas diverge entre fontes
+ *   'verificada'     — conferido contra a fonte em `fonte`
+ * =============================================================
+ */
+
+export type StatusCusto = 'nao-verificada' | 'em-duvida' | 'verificada';
+
+export interface Custo {
+  /** Identificador estável. Usado por src/lib/planos.ts. */
+  chave: string;
+  rotulo: string;
+  /** Em BRL, já convertido. */
+  valor: number;
+  /** Onde conferir. URL ou nome do documento. */
+  fonte: string;
+  status: StatusCusto;
+  /** 'aaaa-mm-dd' quando conferido. null enquanto não. */
+  verificadoEm: string | null;
+  /** Origem do número enquanto não verificado. */
+  nota?: string;
+}
+
+export const TABELA_CUSTOS: Record<string, Custo> = {
+  // ---------- Inglaterra ----------
+  uk_teste_ingles: {
+    chave: 'uk_teste_ingles',
+    rotulo: 'Teste de inglês (IELTS)',
+    valor: 900,
+    fonte: 'https://www.gov.uk/government/publications/iielts-fees',
+    status: 'nao-verificada',
+    verificadoEm: null,
+    nota: 'Estimativa para IELTS Academic (~£130). Confirmar se o teste é aceito.',
+  },
+  uk_passaporte: {
+    chave: 'uk_passaporte',
+    rotulo: 'Passaporte comum',
+    valor: 300,
+    fonte: 'https://www.gov.br/pf/pt-br/assuntos/passaporte',
+    status: 'nao-verificada',
+    verificadoEm: null,
+  },
+  uk_apostila_escolar: {
+    chave: 'uk_apostila_escolar',
+    rotulo: 'Tradução juramentada de documentos escolares',
+    valor: 600,
+    fonte: 'British Council — tradutores juramentados no Reino Unido',
+    status: 'nao-verificada',
+    verificadoEm: null,
+  },
+  uk_cas: {
+    chave: 'uk_cas',
+    rotulo: 'Carta CAS (Confirmation of Acceptance for Studies)',
+    valor: 3_100,
+    fonte: 'https://www.gov.uk/student-visa',
+    status: 'nao-verificada',
+    verificadoEm: null,
+    nota: '£490 pela universidade. O valor é definido por ela, não pelo governo.',
+  },
+  uk_biometria: {
+    chave: 'uk_biometria',
+    rotulo: 'Taxa de biometria no VAC',
+    valor: 700,
+    fonte: 'https://www.gov.uk/visas-immigration/fees',
+    status: 'nao-verificada',
+    verificadoEm: null,
+    nota: 'Valor aproximado para o VAC no Brasil.',
+  },
+  uk_taxa_visto: {
+    chave: 'uk_taxa_visto',
+    rotulo: 'Taxa de visto (Student)',
+    valor: 3_500,
+    fonte: 'https://www.gov.uk/student-visa/how-much-it-costs',
+    status: 'nao-verificada',
+    verificadoEm: null,
+  },
+  uk_passagem_seguro: {
+    chave: 'uk_passagem_seguro',
+    rotulo: 'Passagem aérea + seguro £1.035/ano',
+    valor: 4_200,
+    fonte: 'https://www.gov.uk/student-visa',
+    status: 'nao-verificada',
+    verificadoEm: null,
+    nota: 'Seguro obrigatório. A passagem varia muito por rota e data.',
+  },
+  uk_registro: {
+    chave: 'uk_registro',
+    rotulo: 'Registro local e matrícula',
+    valor: 800,
+    fonte: 'Universidade de destino',
+    status: 'nao-verificada',
+    verificadoEm: null,
+  },
+
+  // ---------- Espanha ----------
+  es_traducao: {
+    chave: 'es_traducao',
+    rotulo: 'Tradução juramentada (spanhol)',
+    valor: 800,
+    fonte: 'MAEC — tradutores juramentados',
+    status: 'nao-verificada',
+    verificadoEm: null,
+  },
+  uk_passaporte_compartilhado: {
+    chave: 'uk_passaporte_compartilhado',
+    rotulo: 'Passaporte comum',
+    valor: 300,
+    fonte: 'https://www.gov.br/pf/pt-br/assuntos/passaporte',
+    status: 'nao-verificada',
+    verificadoEm: null,
+  },
+  es_seguro_estudo: {
+    chave: 'es_seguro_estudo',
+    rotulo: 'Seguro médico privado (estudante)',
+    valor: 1_400,
+    fonte: 'Consulado Geral da Espanha em Brasília',
+    status: 'nao-verificada',
+    verificadoEm: null,
+  },
+  es_seguro_nomad: {
+    chave: 'es_seguro_nomad',
+    rotulo: 'Seguro médico privado (teletrabalho)',
+    valor: 1_800,
+    fonte: 'Consulado Geral da Espanha em Brasília',
+    status: 'nao-verificada',
+    verificadoEm: null,
+    nota: 'A cobertura de saúdeEuropeia costuma ser mais barata que a local.',
+  },
+  es_taxa_visto: {
+    chave: 'es_taxa_visto',
+    rotulo: 'Taxa de visto (estudos / longa duração)',
+    valor: 900,
+    fonte: 'Consulado Geral da Espanha em Brasília — tabela de taxas',
+    status: 'nao-verificada',
+    verificadoEm: null,
+    nota: 'O valor muda por tipo de autorização. Conferir a tabela atual.',
+  },
+  es_passagem: {
+    chave: 'es_passagem',
+    rotulo: 'Passagem aérea',
+    valor: 5_000,
+    fonte: 'Companhia aérea',
+    status: 'nao-verificada',
+    verificadoEm: null,
+    nota: 'Não existe valor fixo. É a maior incerteza de todo o cálculo.',
+  },
+  es_moradia: {
+    chave: 'es_moradia',
+    rotulo: 'Moradia inicial na Espanha',
+    valor: 4_500,
+    fonte: 'Aluguel / hospedagem',
+    status: 'nao-verificada',
+    verificadoEm: null,
+    nota: 'Comprovante de endereço é requisito do visto de teletrabalho.',
+  },
+  es_tie: {
+    chave: 'es_tie',
+    rotulo: 'Registro de estrangeiros e TIE',
+    valor: 600,
+    fonte: 'Consulado / Oficina de Extranjeria',
+    status: 'nao-verificada',
+    verificadoEm: null,
+  },
+};
+
+/** Custos que ainda precisam de conferência. */
+export function custosPendentes(): Custo[] {
+  return Object.values(TABELA_CUSTOS).filter((c) => c.status !== 'verificada');
+}
+
+export function totalPendente(): number {
+  return custosPendentes().length;
+}
+
+/** Valor de um custo pela chave. Estoura em vez de devolver NaN em silêncio. */
+export function custoDe(chave: string): number {
+  const custo = TABELA_CUSTOS[chave];
+  if (!custo) throw new Error(`Custo "${chave}" não existe em TABELA_CUSTOS.`);
+  return custo.valor;
+}
+
+/**
+ * Faixas de custo por rota, somando os itens do checklist mais o que o app
+ * não consegue estimar (passagem, custo de vida, câmbio).
+ *
+ * ⚠️ Também estimadas. Ver a ressalva no topo deste arquivo.
+ */
+const FAIXAS: Record<string, { custoMin: number; custoMax: number }> = {
+  'reino-unidos-estudo': { custoMin: 25_000, custoMax: 45_000 },
+  'espanha-estudo': { custoMin: 15_000, custoMax: 30_000 },
+  'espanha-digital-nomad': { custoMin: 20_000, custoMax: 40_000 },
+};
+
+/**
  * ⚠️ Custos e prazos abaixo são ESTIMATIVAS, não tabelas oficiais.
  * Mesma ressalva do checklist em src/lib/planos.ts — valide contra UKVI e
- * consulado espanhol antes de publicar. Ver AVISO_CUSTOS lá.
+ * consulado espanhol antes de publicar. Ver TABELA_CUSTOS acima.
  */
-const BASE: Record<string, Omit<Rota, 'viabilidade' | 'resumo'>> = {
+const BASE: Record<string, Omit<Rota, 'viabilidade' | 'resumo' | 'custoMin' | 'custoMax'>> = {
   'reino-unidos-estudo': {
     slug: 'reino-unidos-estudo',
     nome: 'Estudo na Inglaterra',
-    custoMin: 25_000,
-    custoMax: 45_000,
     tempoMeses: [3, 6],
     passos: [
       'Escolher uma universidade e um curso elegível para o Student visa, e obter a carta de aceitação condicional.',
@@ -85,8 +301,6 @@ const BASE: Record<string, Omit<Rota, 'viabilidade' | 'resumo'>> = {
   'espanha-estudo': {
     slug: 'espanha-estudo',
     nome: 'Estudo na Espanha',
-    custoMin: 15_000,
-    custoMax: 30_000,
     tempoMeses: [2, 5],
     passos: [
       'Conseguir a credencial de admissão (DIP) na universidade, ou pré-inscrição se for pós-graduação.',
@@ -98,8 +312,6 @@ const BASE: Record<string, Omit<Rota, 'viabilidade' | 'resumo'>> = {
   'espanha-digital-nomad': {
     slug: 'espanha-digital-nomad',
     nome: 'Espanha — Digital Nomad',
-    custoMin: 20_000,
-    custoMax: 40_000,
     tempoMeses: [3, 6],
     passos: [
       'Provar renda remota de pelo menos 2,5x o salário mínimo espanhol, nos últimos 3 meses.',
@@ -249,6 +461,7 @@ export function diagnosticar(respostas: Respostas): Diagnostico {
   // ---------- montagem ----------
   const rotas: Rota[] = Object.keys(BASE).map((slug) => ({
     ...BASE[slug],
+    ...FAIXAS[slug],
     viabilidade: ROTULO[Math.max(0, Math.min(2, nivel[slug]))],
     resumo: RESUMO[slug],
   }));

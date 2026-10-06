@@ -15,6 +15,10 @@
  * =============================================================
  */
 
+// Import relativo COM extensão por dois motivos: este arquivo roda direto no
+// Node sem bundler (node --test), e lá o alias `@/` não existe e a extensão
+// é obrigatória. O tsconfig já tem `allowImportingTsExtensions`.
+import { custoDe } from './diagnostico.ts';
 import type { FasePlano, ItemPlano } from '@/lib/database.types';
 
 /**
@@ -45,7 +49,11 @@ export const AVISO_CUSTOS =
   'conferidos item a item. Confirme cada valor na fonte oficial antes de ' +
   'decidir por eles.';
 
-type ItemBruto = Omit<ItemPlano, 'custo'> & { custo: number };
+/** Item como está no código: o custo é uma REFERÊNCIA à tabela, não um número. */
+type ItemBruto = Omit<ItemPlano, 'custo'> & {
+  /** Chave em TABELA_CUSTOS (src/lib/diagnostico.ts). Sem custo é `zero`. */
+  custoChave: string;
+};
 
 export const FASES: { id: FasePlano; nome: string }[] = [
   { id: 'preparacao', nome: 'Preparação' },
@@ -63,7 +71,7 @@ const checklists: Record<string, ItemBruto[]> = {
         'Filtrar cursos elegíveis ao Student visa e montar uma lista de 3faculdades.',
       fase: 'preparacao',
       prazo: 'semana 1',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
       titulo: 'Abrir conta para guardar os funds',
@@ -71,7 +79,7 @@ const checklists: Record<string, ItemBruto[]> = {
         'Os £1.400 por ano precisam ficar 28 dias seguidos numa conta em seu nome.',
       fase: 'preparacao',
       prazo: 'semana 1 a 3',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
       titulo: 'Teste de inglês',
@@ -79,7 +87,7 @@ const checklists: Record<string, ItemBruto[]> = {
         ' IELTS Academic ou equivalente é aceito. Sem ele, a oferta pode ser recusada.',
       fase: 'preparacao',
       prazo: 'semana 2',
-      custo: 900,
+      custoChave: 'uk_teste_ingles',
     },
     {
       titulo: 'Passaporte válido',
@@ -87,7 +95,7 @@ const checklists: Record<string, ItemBruto[]> = {
         'Precisa ter pelo menos 6 meses de validade sobre a data de saída.',
       fase: 'documentos',
       prazo: 'semana 1',
-      custo: 300,
+      custoChave: 'uk_passaporte_compartilhado',
     },
     {
       titulo: 'Histórico escolar e diplomas',
@@ -95,7 +103,7 @@ const checklists: Record<string, ItemBruto[]> = {
         'Declaração de matrícula e certificado de conclusão, com tradução juramentada se necessário.',
       fase: 'documentos',
       prazo: 'semana 3 a 4',
-      custo: 600,
+      custoChave: 'uk_apostila_escolar',
     },
     {
       titulo: 'Extratos bancários dos últimos meses',
@@ -103,7 +111,7 @@ const checklists: Record<string, ItemBruto[]> = {
         'Mostrar origem do dinheiro para não levantar dúvida sobre fundos.',
       fase: 'documentos',
       prazo: 'semana 4',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
       titulo: 'Obter a carta CAS',
@@ -111,21 +119,21 @@ const checklists: Record<string, ItemBruto[]> = {
         'A universidade emite após a oferta. Custa £490 e define a validade do pedido.',
       fase: 'aplicacao',
       prazo: 'semana 6 a 8',
-      custo: 3_100,
+      custoChave: 'uk_cas',
     },
     {
       titulo: 'Agendar a biometria no VAC',
       descricao: 'A tomada de digital e foto é feita presencialmente.',
       fase: 'aplicacao',
       prazo: 'semana 9',
-      custo: 700,
+      custoChave: 'uk_biometria',
     },
     {
       titulo: 'Enviar o pedido e pagar a taxa',
       descricao: 'Taxa de visto em Eligibility and fee, paga online após o CAS.',
       fase: 'aplicacao',
       prazo: 'semana 9 a 10',
-      custo: 3_500,
+      custoChave: 'uk_taxa_visto',
     },
     {
       titulo: 'Comprar passagem e seguro',
@@ -133,7 +141,7 @@ const checklists: Record<string, ItemBruto[]> = {
         'O UKVI exige comprovante de montagem e cobertura médica £1.035 por ano.',
       fase: 'aplicacao',
       prazo: 'após aprovação',
-      custo: 4_200,
+      custoChave: 'uk_passagem_seguro',
     },
     {
       titulo: 'Registro no local e matrícula',
@@ -141,7 +149,7 @@ const checklists: Record<string, ItemBruto[]> = {
         'Guarde o seu BRP e finalize a matrícula para não perder a bolsa.',
       fase: 'depois',
       prazo: 'até 10 dias após chegar',
-      custo: 800,
+      custoChave: 'uk_registro',
     },
   ],
 
@@ -152,7 +160,7 @@ const checklists: Record<string, ItemBruto[]> = {
         'Muitos cursos aceitam apenas pré-inscrição; outros exigem nota de corte.',
       fase: 'preparacao',
       prazo: 'semana 1',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
       titulo: 'Conferir a equivalência de escolaridade',
@@ -160,7 +168,7 @@ const checklists: Record<string, ItemBruto[]> = {
         'Se a universidade exigir, o diploma brasileiro precisa ser homologado na España.',
       fase: 'preparacao',
       prazo: 'semana 1 a 3',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
       titulo: 'Abrir conta e juntar a capacidade econômica',
@@ -168,14 +176,14 @@ const checklists: Record<string, ItemBruto[]> = {
         'Valor mantido conforme o curso e a duração; fica no consulado.',
       fase: 'preparacao',
       prazo: 'semana 1 a 3',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
       titulo: 'Traduz e apostilar documentos',
       descricao: 'Sworn translator em espanhol, com cartório.',
       fase: 'documentos',
       prazo: 'semana 3 a 5',
-      custo: 800,
+      custoChave: 'es_traducao',
     },
     {
       titulo: 'Seguro médico privado',
@@ -183,7 +191,7 @@ const checklists: Record<string, ItemBruto[]> = {
         'Cobertura mínima exigida, válida para todo o território espanhol.',
       fase: 'documentos',
       prazo: 'semana 5',
-      custo: 1_400,
+      custoChave: 'es_seguro_estudo',
     },
     {
       titulo: 'Extratos e comprovante de moradia',
@@ -191,14 +199,14 @@ const checklists: Record<string, ItemBruto[]> = {
         'Moradia na Espanha ou responsável, com contrato ou declaração.',
       fase: 'documentos',
       prazo: 'semana 5 a 6',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
       titulo: 'Preencher o formulário e pagar a taxa',
       descricao: 'Pedido no consulado, presencialmente na maioria dos casos.',
       fase: 'aplicacao',
       prazo: 'semana 7',
-      custo: 900,
+      custoChave: 'es_taxa_visto',
     },
     {
       titulo: 'Entrevista consular',
@@ -206,28 +214,28 @@ const checklists: Record<string, ItemBruto[]> = {
         'Leve passaporte, CAS ou credencial, comprovante financeiro e seguro.',
       fase: 'aplicacao',
       prazo: 'semana 7 a 8',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
       titulo: 'Aguardar o visto de entrada',
       descricao: 'O prazo costuma ser de 15 a 45 dias úteis.',
       fase: 'aguardando',
       prazo: 'após aprovação',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
       titulo: 'Comprar passagem aérea',
       descricao: 'Só depois do visto. A passagem não é exigida no pedido.',
       fase: 'depois',
       prazo: 'após aprovação',
-      custo: 5_000,
+      custoChave: 'es_passagem',
     },
     {
-      titulo: 'Registro na foreigners e matrícula',
+      titulo: 'Registro de estrangeiros e matrícula',
       descricao: 'Obtenha o NIE/TIE e finalize a matrícula.',
       fase: 'depois',
-      prazo: 'até 30 dias após chegar',
-      custo: 600,
+      prazo: 'após aprovação',
+      custoChave: 'es_tie',
     },
   ],
 
@@ -238,7 +246,7 @@ const checklists: Record<string, ItemBruto[]> = {
         'A Spain exige vínculo formal: CLT, PJ ou prestador com cliente fora do país.',
       fase: 'preparacao',
       prazo: 'semana 1',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
       titulo: 'Provar renda de 2,5x o salário mínimo',
@@ -246,21 +254,21 @@ const checklists: Record<string, ItemBruto[]> = {
         'Extratos dos últimos 3 meses mostrando a renda entrando na conta.',
       fase: 'preparacao',
       prazo: 'semana 1 a 2',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
       titulo: 'Abrir conta para os documentos',
       descricao: 'Ter conta bancária em nome próprio facilita a prova de recursos.',
       fase: 'preparacao',
       prazo: 'semana 1',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
       titulo: 'Contratar seguro médico',
       descricao: 'Seguro privado com cobertura em toda a Europa.',
       fase: 'documentos',
       prazo: 'semana 2',
-      custo: 1_800,
+      custoChave: 'es_seguro_nomad',
     },
     {
       titulo: 'Comprovante de endereço na Espanha',
@@ -268,7 +276,7 @@ const checklists: Record<string, ItemBruto[]> = {
         'Aluguel, airbnb ou hospedagem com contrato válido.',
       fase: 'documentos',
       prazo: 'semana 2 a 3',
-      custo: 4_500,
+      custoChave: 'es_moradia',
     },
     {
       titulo: 'Contrato de trabalho e nota fiscal',
@@ -276,42 +284,57 @@ const checklists: Record<string, ItemBruto[]> = {
         'Prova de que a atividade é exercida remotamente para fora da Espanha.',
       fase: 'documentos',
       prazo: 'semana 3',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
       titulo: 'Passaporte com 6 meses de validade',
       descricao: 'Verifique também o visto de saída do Brasil.',
       fase: 'documentos',
       prazo: 'semana 1',
-      custo: 300,
+      custoChave: 'uk_passaporte_compartilhado',
     },
     {
       titulo: 'Pedir a autorização de residência',
       descricao: 'Formulário na sede consular da região onde vai morar.',
       fase: 'aplicacao',
       prazo: 'semana 4',
-      custo: 900,
+      custoChave: 'es_taxa_visto',
     },
     {
       titulo: 'Entrevista e entrega de documentos',
       descricao: 'Envie tudo junto e guarde o comprovante de protocolo.',
       fase: 'aplicacao',
       prazo: 'semana 4 a 5',
-      custo: 0,
+      custoChave: 'zero',
     },
     {
-      titulo: 'Regularizar na Nonetheless uro',
+      titulo: 'Regularizar a residência na Espanha',
       descricao: 'Depois de chegar: alta na Segurança Social e emissão do TIE.',
       fase: 'depois',
       prazo: 'até 30 dias após chegar',
-      custo: 700,
+      custoChave: 'es_tie',
     },
   ],
 };
 
-/** Lista de itens da rota, na ordem em que devem ser feitos. */
+/**
+ * Lista de itens da rota, na ordem em que devem ser feitos.
+ *
+ * O valor sai de TABELA_CUSTOS — por isso corrigir um número na tabela
+ * atualiza a tela inteira sem tocar aqui.
+ */
 export function itensDaRota(slug: string): ItemPlano[] {
-  return (checklists[slug] ?? []).map(({ ...item }) => item);
+  return (checklists[slug] ?? []).map(({ custoChave, ...item }) => ({
+    ...item,
+    custo: custoChave === 'zero' ? 0 : custoDe(custoChave),
+  }));
+}
+
+/** Todas as chaves de custo usadas por qualquer rota. Serve para o teste. */
+export function chavesUsadas(): string[] {
+  return Object.values(checklists)
+    .flat()
+    .map((i) => i.custoChave);
 }
 
 /** Agrupa por fase, na ordem das cinco fases. Sempre devolve as 5 fases. */
