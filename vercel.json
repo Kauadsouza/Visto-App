@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "expo-react-router",
   "buildCommand": "npx expo export --platform web --output-dir dist",
   "outputDirectory": "dist",
   "rewrites": [{ "source": "/(.*)", "destination": "/" }]
