@@ -9,7 +9,7 @@
  * Uso: node .expo/verificar-navegador.mjs [url]
  */
 import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -28,7 +28,7 @@ const chrome = spawn(CHROME, [
   '--no-first-run',
   '--no-default-browser-check',
   '--disable-gpu',
-  '--window-size=420,900',
+  '--window-size=520,1000',
   'about:blank',
 ], { stdio: 'ignore' });
 
@@ -122,6 +122,17 @@ async function main() {
   // O bundle de dev é grande; 25s dá folga sem travar.
   await dormir(25000);
 
+  // Semear o estado local (SEED_JSON) e recarregar, para conseguir ver telas
+  // que exigem questionário respondido sem precisar clicar em 8 perguntas.
+  if (process.env.SEED_JSON) {
+    const chave = process.env.SEED_KEYA ?? 'visto:questionario';
+    await enviar('Runtime.evaluate', {
+      expression: `localStorage.setItem(${JSON.stringify(chave)}, ${JSON.stringify(process.env.SEED_JSON)});
+                   location.reload();`,
+    });
+    await dormir(12000);
+  }
+
   // Verifica o que realmente está na tela.
   const { result } = await enviar('Runtime.evaluate', {
     expression: `JSON.stringify({
@@ -142,6 +153,14 @@ async function main() {
   console.log(infos.length ? infos.join('\n') : '(sem mensagens)');
   console.log('\n=== PROBLEMAS ===');
   console.log(problemas.length ? problemas.join('\n') : '(nenhum)');
+
+  // Captura da tela, para dar para olhar o resultado e não só os erros.
+  const nome = process.env.ARQUIVO_CAPTURA;
+  if (nome) {
+    const { data } = await enviar('Page.captureScreenshot', { format: 'png' });
+    writeFileSync(nome, Buffer.from(data, 'base64'));
+    console.log(`\ncaptura salva em ${nome}`);
+  }
 
   ws.close();
   chrome.kill();

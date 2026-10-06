@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronRight, Info, TriangleAlert } from 'lucide-react-native';
 
+import { Tela } from '@/components/Tela';
 import { Aviso, Card, Etiqueta, Numero, Rotulo } from '@/components/ui';
 import { avisoComplementares, diagnosticar, type Rota } from '@/lib/diagnostico';
 import { AVISO_CUSTOS } from '@/lib/planos';
@@ -16,7 +16,6 @@ const moeda = (v: number) => `R$ ${v.toLocaleString('pt-BR')}`;
 const LARGURA_VIABILIDADE = { alta: 100, media: 60, baixa: 25 } as const;
 
 export default function Resultado() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { respostas, reiniciar, irPara } = useQuestionario();
 
@@ -24,12 +23,11 @@ export default function Resultado() {
 
   if (!resultado.completo) {
     return (
-      <View className="flex-1 bg-fundo">
-        <View style={{ paddingTop: insets.top }}>
-          <CabecalhoSimples titulo="Seu diagnóstico" />
-        </View>
+      <Tela>
+      <View className="flex-1">
+        <CabecalhoSimples titulo="Seu diagnóstico" />
 
-        <View className="flex-1 items-center justify-center px-8">
+        <View className="flex-1 items-center justify-center px-6">
           <Text className="text-center text-base leading-7" style={{ color: cores.texto2 }}>
             Faltam algumas respostas para montar seu diagnóstico. Volte e
             complete o questionário.
@@ -48,12 +46,14 @@ export default function Resultado() {
           </Pressable>
         </View>
       </View>
+      </Tela>
     );
   }
 
   return (
-    <View className="flex-1 bg-fundo">
-      <View style={{ paddingTop: insets.top }}>
+    <Tela>
+    <View className="flex-1">
+      <View>
         <CabecalhoSimples
           titulo="Seu diagnóstico"
           subtitulo={`${resultado.rotas.length} caminhos para o seu perfil`}
@@ -98,6 +98,7 @@ export default function Resultado() {
         </Pressable>
       </ScrollView>
     </View>
+    </Tela>
   );
 }
 

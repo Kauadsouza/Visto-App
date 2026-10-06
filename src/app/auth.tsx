@@ -9,10 +9,10 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TriangleAlert } from 'lucide-react-native';
 
 import { Botao } from '@/components/Botao';
+import { Tela } from '@/components/Tela';
 import { Aviso, Rotulo } from '@/components/ui';
 import { MODO_SEM_BACKEND } from '@/lib/config';
 import { mensagemDe } from '@/lib/erros';
@@ -74,7 +74,6 @@ function Campo({
 }
 
 export default function Auth() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { session, erro, entrar, cadastrar, entrarComGoogle, limparErro } = useAuth();
 
@@ -90,7 +89,7 @@ export default function Auth() {
   const ocupado = enviando || googleCarregando;
 
   useEffect(() => {
-    if (session) router.replace('/questionario');
+    if (session) router.replace('/');
   }, [session, router]);
 
   function trocarModo(novo: Modo) {
@@ -118,7 +117,7 @@ export default function Auth() {
     try {
       if (modo === 'entrar') await entrar(emailLimpo, senha);
       else await cadastrar(emailLimpo, senha);
-      router.replace('/questionario');
+      router.replace('/');
     } catch (e) {
       setErroLocal(mensagemDe(e));
     } finally {
@@ -131,7 +130,7 @@ export default function Auth() {
     setGoogleCarregando(true);
     try {
       await entrarComGoogle();
-      router.replace('/questionario');
+      router.replace('/');
     } catch (e) {
       setErroLocal(mensagemDe(e));
     } finally {
@@ -140,18 +139,17 @@ export default function Auth() {
   }
 
   return (
+    <Tela>
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="flex-1 bg-fundo"
+      className="flex-1"
       keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
     >
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingTop: insets.top + 40,
-          paddingBottom: insets.bottom + 32,
-        }}
+        // flexGrow deixa o conteúdo ocupar a altura toda; sem isso o rodapé
+        // fica colado no formulário e sobra um vazio enorme embaixo.
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 28 }}
         keyboardShouldPersistTaps="handled"
       >
         <Rotulo cor={cores.verde}>{modo === 'entrar' ? 'voltar ao plano' : 'começar'}</Rotulo>
@@ -216,9 +214,9 @@ export default function Auth() {
           </Pressable>
         ) : null}
 
-        <View className="my-8 flex-row items-center gap-4">
+        <View className="mb-8 mt-7 flex-row items-center">
           <View className="h-px flex-1" style={{ backgroundColor: cores.borda }} />
-          <Text className="text-caption uppercase" style={{ color: cores.texto4 }}>
+          <Text className="mx-4 text-caption uppercase" style={{ color: cores.texto4 }}>
             ou
           </Text>
           <View className="h-px flex-1" style={{ backgroundColor: cores.borda }} />
@@ -245,10 +243,13 @@ export default function Auth() {
           </Text>
         </Pressable>
 
+        {/* Empurra o rodapé para o fim da tela. */}
+        <View className="flex-1 min-h-8" />
+
         {MODO_SEM_BACKEND ? (
-          <View className="mt-10">
+          <View>
             <Pressable
-              onPress={() => router.replace('/questionario')}
+              onPress={() => router.replace('/')}
               disabled={ocupado}
               className="items-center rounded-xl border py-4 active:opacity-80"
               style={{ backgroundColor: cores.fundo2, borderColor: cores.borda }}
@@ -268,17 +269,22 @@ export default function Auth() {
           </View>
         ) : null}
 
-        <View className="mt-10 flex-row justify-center gap-2">
+        <View className="mt-10 flex-row items-center justify-center">
           <Text className="text-sm" style={{ color: cores.texto3 }}>
             {modo === 'entrar' ? 'Ainda não tem conta?' : 'Já tem conta?'}
           </Text>
-          <Pressable onPress={() => trocarModo(modo === 'entrar' ? 'cadastrar' : 'entrar')}>
+          <Pressable
+            onPress={() => trocarModo(modo === 'entrar' ? 'cadastrar' : 'entrar')}
+            style={{ marginLeft: 6 }}
+          >
             <Text className="text-sm font-semibold" style={{ color: cores.verde }}>
               {modo === 'entrar' ? 'Criar conta' : 'Entrar'}
             </Text>
           </Pressable>
         </View>
+        <View style={{ height: 28 }} />
       </ScrollView>
     </KeyboardAvoidingView>
+    </Tela>
   );
 }

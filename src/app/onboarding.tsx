@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react';
 import { Dimensions, Pressable, ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Compass, FileCheck2, Route } from 'lucide-react-native';
 
 import { Botao } from '@/components/Botao';
+import { Tela } from '@/components/Tela';
 import { Barra, IconeQuadrado } from '@/components/ui';
 import { cores } from '@/theme';
 
@@ -32,7 +32,6 @@ const SLIDES = [
 ];
 
 export default function Onboarding() {
-  const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   const [indice, setIndice] = useState(0);
 
@@ -47,12 +46,10 @@ export default function Onboarding() {
   };
 
   return (
-    <View className="flex-1 bg-fundo">
+    <Tela>
+    <View className="flex-1">
       {/* Topo: progresso em segmentos — mostra quantas etapas faltam */}
-      <View
-        className="flex-row gap-1.5 px-6"
-        style={{ paddingTop: insets.top + 16 }}
-      >
+      <View className="flex-row gap-1.5 px-6 pt-5">
         {SLIDES.map((s, i) => (
           <View key={s.titulo} className="flex-1">
             <Barra
@@ -102,7 +99,7 @@ export default function Onboarding() {
         ))}
       </ScrollView>
 
-      <View className="px-8" style={{ paddingBottom: insets.bottom + 24 }}>
+      <View className="px-6 pb-6">
         {indice > 0 ? (
           <Pressable onPress={() => irPara(indice - 1)} className="mb-4 items-center py-2">
             <Text className="text-sm" style={{ color: cores.texto3 }}>
@@ -117,5 +114,6 @@ export default function Onboarding() {
         />
       </View>
     </View>
+    </Tela>
   );
 }

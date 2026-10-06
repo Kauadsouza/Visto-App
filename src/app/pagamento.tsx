@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Check, CreditCard, ExternalLink } from 'lucide-react-native';
 
 import { Botao } from '@/components/Botao';
+import { Tela } from '@/components/Tela';
 import { Aviso, Card, Rotulo } from '@/components/ui';
 import { PRECO_MENSAL } from '@/lib/config';
 import { temAcesso, usePlano } from '@/store/plano';
@@ -22,7 +22,6 @@ const BENEFICIOS = [
 type Retorno = 'nenhum' | 'voltou';
 
 export default function Pagamento() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { assinatura, ativarAssinaturaDemo, cancelarAssinatura } = usePlano();
 
@@ -74,13 +73,13 @@ export default function Pagamento() {
   }
 
   return (
-    <View className="flex-1 bg-fundo">
+    <Tela>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
           paddingHorizontal: 24,
-          paddingTop: insets.top + 28,
-          paddingBottom: insets.bottom + 32,
+          paddingTop: 28,
+          paddingBottom: 32,
         }}
       >
         <Rotulo>acesso completo</Rotulo>
@@ -207,6 +206,6 @@ export default function Pagamento() {
           privacidade do Visto. Cancelamento a qualquer momento.
         </Text>
       </ScrollView>
-    </View>
+    </Tela>
   );
 }

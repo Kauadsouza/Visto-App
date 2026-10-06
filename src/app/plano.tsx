@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CalendarDays, Check, Lock, TriangleAlert } from 'lucide-react-native';
 
 import { Botao } from '@/components/Botao';
+import { Tela } from '@/components/Tela';
 import { Aviso, Barra, Card, Numero, Rotulo, TituloSecao } from '@/components/ui';
 import { diagnosticar } from '@/lib/diagnostico';
 import type { ItemPlano } from '@/lib/database.types';
@@ -17,7 +17,6 @@ import { cores } from '@/theme';
 const hojeISO = () => new Date().toISOString().slice(0, 10);
 
 export default function Plano() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { rota } = useLocalSearchParams<{ rota?: string }>();
 
@@ -37,8 +36,9 @@ export default function Plano() {
   const percentual = itens.length ? (concluidos.length / itens.length) * 100 : 0;
 
   return (
-    <View className="flex-1 bg-fundo">
-      <View style={{ paddingTop: insets.top }}>
+    <Tela>
+    <View className="flex-1">
+      <View>
         <ContadorDias contador={contador} />
 
         <View className="px-6 pb-5 pt-4">
@@ -85,6 +85,7 @@ export default function Plano() {
         )}
       </ScrollView>
     </View>
+    </Tela>
   );
 }
 

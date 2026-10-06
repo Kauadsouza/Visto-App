@@ -9,16 +9,15 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Check } from 'lucide-react-native';
 
 import { Botao } from '@/components/Botao';
+import { Tela } from '@/components/Tela';
 import { PERGUNTAS } from '@/lib/perguntas';
 import { respostaValida, useQuestionario } from '@/store/questionario';
 import { cores } from '@/theme';
 
 export default function Questionario() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
 
@@ -42,12 +41,13 @@ export default function Questionario() {
   };
 
   return (
+    <Tela>
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="flex-1 bg-fundo"
+      className="flex-1"
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <View style={{ paddingTop: insets.top }}>
+      <View>
         <View className="flex-row items-center gap-4 px-6 pb-5">
           <Pressable
             accessibilityRole="button"
@@ -155,10 +155,7 @@ export default function Questionario() {
         </View>
       </ScrollView>
 
-      <View
-        className="px-6 pt-2"
-        style={{ paddingBottom: insets.bottom + 20 }}
-      >
+      <View className="px-6 pt-2 pb-4">
         <Botao
           titulo={ultima ? 'Ver meu resultado' : 'Próxima'}
           onPress={avancar}
@@ -166,5 +163,6 @@ export default function Questionario() {
         />
       </View>
     </KeyboardAvoidingView>
+    </Tela>
   );
 }

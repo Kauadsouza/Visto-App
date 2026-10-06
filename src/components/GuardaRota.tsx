@@ -12,14 +12,22 @@ const SEM_LOGIN = ['onboarding', 'auth'] as const;
 /**
  * Rotas liberadas sem sessão.
  *
- * Com o Supabase ainda fora do ar (`MODO_SEM_BACKEND`), questionário e
- * resultado ficam liberados: é o modo de desenvolvimento, em que tudo roda só
- * com estado local. Ao ligar o backend, esta lista volta a ser apenas
+ * Com o Supabase ainda fora do ar (`MODO_SEM_BACKEND`), a home e o fluxo de
+ * diagnóstico ficam liberados: é o modo de desenvolvimento, em que tudo roda
+ * só com estado local. Ao ligar o backend, esta lista volta a ser apenas
  * onboarding e auth, e o resto passa a exigir login.
  */
 const AREA_PUBLICA: readonly string[] = MODO_SEM_BACKEND
   ? [...SEM_LOGIN, 'questionario', 'resultado', 'plano', 'pagamento']
   : SEM_LOGIN;
+
+/**
+ * Rota de destino depois do login.
+ *
+ * A home (/) é o índice do Expo Router: `useSegments` devolve uma lista
+ * vazia quando ela está no ar, então ela nunca aparece em `segments[0]`.
+ */
+const DESTINO = '/';
 
 /**
  * Portão de sessão.
@@ -36,18 +44,20 @@ export function GuardaRota({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (carregando) return;
 
+    // A rota índice (a home) não tem nome: `segments[0]` vem indefinido.
     const atual = segments[0];
-    const naAreaPublica = AREA_PUBLICA.includes(atual);
+    const naHome = atual === undefined;
+    const liberada = naHome || AREA_PUBLICA.includes(atual);
 
     if (!session) {
-      // Sem sessão: só as rotas públicas são acessíveis.
-      if (!naAreaPublica) router.replace('/onboarding');
+      // Sem sessão: só as rotas liberadas são acessíveis.
+      if (!liberada) router.replace('/onboarding');
       return;
     }
 
     // Com sessão: não faz sentido ver onboarding nem login de novo.
     if (SEM_LOGIN.includes(atual as (typeof SEM_LOGIN)[number])) {
-      router.replace('/questionario');
+      router.replace(DESTINO);
     }
   }, [session, carregando, segments, router]);
 
