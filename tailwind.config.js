@@ -2,6 +2,14 @@
 module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
+  // O padrão do Tailwind é 'media', que faz o NativeWindDerivar o esquema de
+  // cor do sistema. Na web o navigator chama setColorScheme() e o NativeWind
+  // lança: "Cannot manually set color scheme, as dark mode is type 'media'".
+  //
+  // 'class' resolve. E não custa nada aqui: o app não usa nenhuma variante
+  // `dark:` — o fundo escuro vem de cores explícitas (bg-fundo, text-texto),
+  // então a paleta continua idêntica nos dois esquemas.
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
