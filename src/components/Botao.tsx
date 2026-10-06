@@ -10,7 +10,6 @@ type Props = Omit<PressableProps, 'children'> & {
   variante?: Variante;
   tamanho?: Tamanho;
   carregando?: boolean;
-  /** Largura total do pai. Desligue quando o botão divide espaço com outro. */
   cheio?: boolean;
 };
 
@@ -34,6 +33,7 @@ export function Botao({
   ...resto
 }: Props) {
   const estilo = FUNDO[variante];
+  const ehPrimario = variante === 'primario';
 
   return (
     <Pressable
@@ -41,7 +41,7 @@ export function Botao({
       accessibilityState={{ disabled: Boolean(disabled || carregando) }}
       disabled={disabled || carregando}
       className={[
-        'items-center justify-center rounded-xl border active:opacity-75',
+        'items-center justify-center rounded-xl border active:opacity-80',
         ALTURA[tamanho],
         cheio ? 'w-full' : '',
         disabled && !carregando ? 'opacity-40' : '',
@@ -49,13 +49,30 @@ export function Botao({
       ]
         .filter(Boolean)
         .join(' ')}
-      style={{ backgroundColor: estilo.bg, borderColor: estilo.borda }}
+      style={
+        ehPrimario
+          ? {
+              // Gradiente de marca. Em modo escuro, ganha sombra sutil de
+              // brilho para parecer vivo; em claro, fica chapado.
+              backgroundColor: cores.verde,
+              borderColor: cores.verdeEscuro,
+              shadowColor: cores.verde,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.35,
+              shadowRadius: 12,
+              elevation: 6,
+            }
+          : { backgroundColor: estilo.bg, borderColor: estilo.borda }
+      }
       {...resto}
     >
       {carregando ? (
         <ActivityIndicator color={estilo.texto} />
       ) : (
-        <Text className="text-base font-semibold" style={{ color: estilo.texto }}>
+        <Text
+          className="text-base font-semibold tracking-wide"
+          style={{ color: estilo.texto }}
+        >
           {titulo}
         </Text>
       )}

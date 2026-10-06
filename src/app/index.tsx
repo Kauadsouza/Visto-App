@@ -55,19 +55,37 @@ export default function Inicio() {
   if (!principal) {
     return (
       <Tela>
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 28 }}
-        >
-          <View className="flex-row items-center gap-3">
-            <View
-              className="h-11 w-11 items-center justify-center rounded-xl border"
-              style={{ backgroundColor: `${cores.verde}14`, borderColor: cores.bordaVerde }}
-            >
-              <Compass size={22} color={cores.verde} />
+        <View className="flex-1">
+          {/* Glow verde de marca no topo — dá vida sem virar startup genérico */}
+          <View
+            className="absolute left-0 right-0 top-0 h-72"
+            style={{ backgroundColor: `${cores.verde}10` }}
+          />
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 28 }}
+          >
+            <View className="flex-row items-center gap-3">
+              <View
+                className="h-12 w-12 items-center justify-center rounded-2xl border"
+                style={{
+                  backgroundColor: cores.verde,
+                  borderColor: cores.verdeEscuro,
+                  shadowColor: cores.verde,
+                  shadowOpacity: 0.5,
+                  shadowRadius: 12,
+                  elevation: 6,
+                }}
+              >
+                <Compass size={24} color="#FFFFFF" />
+              </View>
+              <View>
+                <Rotulo cor={cores.verde}>visto</Rotulo>
+                <Text className="text-caption mt-0.5" style={{ color: cores.texto3 }}>
+                  imigração do Brasil para o mundo
+                </Text>
+              </View>
             </View>
-            <Rotulo cor={cores.verde}>visto</Rotulo>
-          </View>
 
           <View className="mt-10 flex-1 justify-center">
             <Text className="text-4xl font-bold" style={{ color: cores.texto }}>
@@ -113,6 +131,7 @@ export default function Inicio() {
             </Text>
           </View>
         </ScrollView>
+        </View>
       </Tela>
     );
   }
@@ -121,6 +140,11 @@ export default function Inicio() {
 
   return (
     <Tela>
+      {/* Glow de marca no topo, atrás de tudo */}
+      <View
+        className="absolute left-0 right-0 top-0 h-80"
+        style={{ backgroundColor: `${cores.verde}0F` }}
+      />
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 }}
@@ -135,56 +159,72 @@ export default function Inicio() {
         </View>
 
         {/* Rota principal: o número mais importante do app */}
-        <Card nivel={2} borda={cores.bordaVerde} className="mt-6 p-6">
-          <Rotulo>rota recomendada</Rotulo>
+        <View
+          className="mt-6 overflow-hidden rounded-2xl border"
+          style={{
+            backgroundColor: cores.superficie2,
+            borderColor: cores.bordaVerde,
+            shadowColor: cores.verde,
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.25,
+            shadowRadius: 24,
+            elevation: 8,
+          }}
+        >
+          {/* Faixa verde sutil no topo do card — ecoa o brand sem virar genérico */}
+          <View className="h-1" style={{ backgroundColor: cores.verde }} />
 
-          <Text className="mt-3 text-2xl font-bold" style={{ color: cores.texto }}>
-            {principal.nome}
-          </Text>
+          <View className="p-6">
+            <Rotulo>rota recomendada</Rotulo>
 
-          <View className="mt-3 flex-row items-center gap-2">
-            <View
-              className="rounded-full px-3 py-1"
-              style={{ backgroundColor: `${cor}1F` }}
-            >
-              <Text className="text-caption font-semibold" style={{ color: cor }}>
-                {rotuloViabilidade[principal.viabilidade]}
-              </Text>
-            </View>
-            <Text className="text-caption" style={{ color: cores.texto3 }}>
-              {`${principal.tempoMeses[0]}–${principal.tempoMeses[1]} meses`}
+            <Text className="mt-3 text-2xl font-bold" style={{ color: cores.texto }}>
+              {principal.nome}
             </Text>
-          </View>
 
-          <Text className="mt-4 text-sm leading-6" style={{ color: cores.texto2 }}>
-            {principal.resumo}
-          </Text>
-
-          <View className="mt-6">
-            <View className="flex-row items-baseline justify-between">
-              <Text className="text-caption font-semibold" style={{ color: cores.texto2 }}>
-                {`${feitos} de ${itens.length} passos`}
-              </Text>
+            <View className="mt-3 flex-row items-center gap-2">
+              <View
+                className="rounded-full px-3 py-1"
+                style={{ backgroundColor: `${cor}1F` }}
+              >
+                <Text className="text-caption font-semibold" style={{ color: cor }}>
+                  {rotuloViabilidade[principal.viabilidade]}
+                </Text>
+              </View>
               <Text className="text-caption" style={{ color: cores.texto3 }}>
-                {`${Math.round(percentual)}%`}
+                {`${principal.tempoMeses[0]}–${principal.tempoMeses[1]} meses`}
               </Text>
             </View>
-            <View className="mt-2">
-              <Barra valor={percentual} altura={6} />
-            </View>
-          </View>
 
-          <Pressable
-            onPress={() => router.push({ pathname: '/plano', params: { rota: principal.slug } })}
-            className="mt-6 flex-row items-center justify-center rounded-xl border py-4 active:opacity-80"
-            style={{ backgroundColor: `${cores.verde}1F`, borderColor: cores.bordaVerde }}
-          >
-            <Text className="font-semibold" style={{ color: cores.verde }}>
-              Continuar meu plano
+            <Text className="mt-4 text-sm leading-6" style={{ color: cores.texto2 }}>
+              {principal.resumo}
             </Text>
-            <ChevronRight size={17} color={cores.verde} className="ml-1" />
-          </Pressable>
-        </Card>
+
+            <View className="mt-6">
+              <View className="flex-row items-baseline justify-between">
+                <Text className="text-caption font-semibold" style={{ color: cores.texto2 }}>
+                  {`${feitos} de ${itens.length} passos`}
+                </Text>
+                <Text className="text-caption" style={{ color: cores.texto3 }}>
+                  {`${Math.round(percentual)}%`}
+                </Text>
+              </View>
+              <View className="mt-2">
+                <Barra valor={percentual} altura={6} />
+              </View>
+            </View>
+
+            <Pressable
+              onPress={() => router.push({ pathname: '/plano', params: { rota: principal.slug } })}
+              className="mt-6 flex-row items-center justify-center rounded-xl border py-4 active:opacity-80"
+              style={{ backgroundColor: cores.verde, borderColor: cores.verdeEscuro }}
+            >
+              <Text className="font-semibold" style={{ color: '#FFFFFF' }}>
+                Continuar meu plano
+              </Text>
+              <ChevronRight size={17} color="#FFFFFF" className="ml-1" />
+            </Pressable>
+          </View>
+        </View>
 
         {/* Duas coisas que a pessoa quer saber sem abrir outra tela */}
         <View className="mt-4 flex-row gap-3">

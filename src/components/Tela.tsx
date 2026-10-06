@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { cores } from '@/theme';
+import { paletas, temaAtual, type Tema } from '@/theme';
 
 /**
  * Casca de todas as telas.
@@ -17,12 +18,33 @@ import { cores } from '@/theme';
  *
  * A borda lateral é só na web: no aparelho ela viraria um filete de 1px
  * sem função nenhuma.
+ *
+ * Também aplica a classe `light`/`dark` no `<html>` do navegador, que é
+ * como o NativeWind decide o esquema de cor. Trocar o tema recarrega a
+ * paleta em todas as telas.
  */
 export function Tela({ children }: { children: ReactNode }) {
+  const [tema, setTema] = useState<Tema>('dark');
   const web = Platform.OS === 'web';
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    setTema(temaAtual());
+    const html = document.documentElement;
+    // Garante a classe coerente no boot — pode estar faltando no SSR.
+    if (!html.classList.contains('light') && !html.classList.contains('dark')) {
+      html.classList.add('dark');
+    }
+  }, []);
+
+  const cores = paletas[tema];
+  const webFora = tema === 'dark' ? '#050807' : '#E8E1D2';
+
   return (
-    <View className="flex-1 items-center" style={{ backgroundColor: cores.fundo2 }}>
+    <View
+      className="flex-1 items-center"
+      style={{ backgroundColor: webFora }}
+    >
       <View
         className="h-full w-full"
         style={{
@@ -39,4 +61,18 @@ export function Tela({ children }: { children: ReactNode }) {
       </View>
     </View>
   );
+}
+
+/** Hook para ler e alternar o tema ativo. */
+export function useTema(): [Tema, (t: Tema) => void] {
+  const [tema, setTema] = useState<Tema>(temaAtual());
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const html = document.documentElement;
+    html.classList.remove('light', 'dark');
+    html.classList.add(tema);
+  }, [tema]);
+
+  return [tema, setTema];
 }

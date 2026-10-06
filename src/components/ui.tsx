@@ -21,7 +21,7 @@ export function Card({
   borda?: string;
   className?: string;
 }) {
-  const e = elevacao[nivel];
+const e = elevacao('dark', nivel);
   return (
     <View
       className={`rounded-2xl border ${className}`}
