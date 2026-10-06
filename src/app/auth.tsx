@@ -1,18 +1,77 @@
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AlertTriangle } from 'lucide-react-native';
+import { TriangleAlert } from 'lucide-react-native';
 
 import { Botao } from '@/components/Botao';
+import { Aviso, Rotulo } from '@/components/ui';
 import { MODO_SEM_BACKEND } from '@/lib/config';
 import { mensagemDe } from '@/lib/erros';
 import { erroConfigSupabase } from '@/lib/supabase';
 import { useAuth } from '@/store/auth';
+import { cores } from '@/theme';
 
 type Modo = 'entrar' | 'cadastrar';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Input com rótulo flutuando acima, no mesmo peso do resto do sistema. */
+function Campo({
+  rotulo,
+  valor,
+  aoMudar,
+  placeholder,
+  seguro,
+  teclado,
+  capitalizar,
+  tipo,
+  aoEnviar,
+}: {
+  rotulo: string;
+  valor: string;
+  aoMudar: (v: string) => void;
+  placeholder: string;
+  seguro?: boolean;
+  teclado?: 'default' | 'email-address';
+  capitalizar?: 'none' | 'sentences';
+  tipo?: 'emailAddress' | 'password' | 'newPassword';
+  aoEnviar?: () => void;
+}) {
+  const [focado, setFocado] = useState(false);
+  const borda = focado ? cores.bordaVerde : cores.borda;
+
+  return (
+    <View className="mt-5">
+      <Rotulo>{rotulo}</Rotulo>
+      <TextInput
+        value={valor}
+        onChangeText={aoMudar}
+        onFocus={() => setFocado(true)}
+        onBlur={() => setFocado(false)}
+        placeholder={placeholder}
+        placeholderTextColor={cores.texto4}
+        secureTextEntry={seguro}
+        keyboardType={teclado ?? 'default'}
+        autoCapitalize={capitalizar ?? 'sentences'}
+        autoCorrect={false}
+        textContentType={tipo}
+        returnKeyType="go"
+        onSubmitEditing={aoEnviar}
+        className="mt-2 h-14 rounded-xl border bg-superficie px-4 text-base"
+        style={{ borderColor: borda, color: cores.texto }}
+      />
+    </View>
+  );
+}
 
 export default function Auth() {
   const insets = useSafeAreaInsets();
@@ -27,14 +86,12 @@ export default function Auth() {
   const [erroLocal, setErroLocal] = useState<string | null>(null);
 
   const configFalta = erroConfigSupabase();
+  const erroExibido = erroLocal ?? erro ?? configFalta;
+  const ocupado = enviando || googleCarregando;
 
-  // O guardião de rota já redireciona; isso cobre o caso da tela montar
-  // com a sessão viva e o redirect ainda não ter rodado.
   useEffect(() => {
     if (session) router.replace('/questionario');
   }, [session, router]);
-
-  const erroExibido = erroLocal ?? erro ?? configFalta;
 
   function trocarModo(novo: Modo) {
     setModo(novo);
@@ -42,34 +99,28 @@ export default function Auth() {
     limparErro();
   }
 
-  /**oferece criar conta quando o email não tem cadastro — o caminho útil. */
-  function sugerirCadastro() {
-    if (!erro) return;
-    if (/não tem conta|não possui conta|not found/i.test(erro)) {
-      trocarModo('cadastrar');
-    }
-  }
+  /** Email válido mas sem cadastro é o caso mais comum: oferece criar conta. */
+  const podeSugerirCadastro = Boolean(
+    erro && /não tem conta|não possui conta|not found/i.test(erro)
+  );
 
   async function enviar() {
     const emailLimpo = email.trim().toLowerCase();
 
     if (!emailLimpo) return setErroLocal('Digite seu email.');
     if (!EMAIL_RE.test(emailLimpo)) return setErroLocal('Esse email não parece válido.');
-    if (senha.length < 6) return setErroLocal('A senha precisa ter pelo menos 6 caracteres.');
+    if (senha.length < 6)
+      return setErroLocal('A senha precisa ter pelo menos 6 caracteres.');
 
     setErroLocal(null);
     setEnviando(true);
 
     try {
-      if (modo === 'entrar') {
-        await entrar(emailLimpo, senha);
-      } else {
-        await cadastrar(emailLimpo, senha);
-      }
+      if (modo === 'entrar') await entrar(emailLimpo, senha);
+      else await cadastrar(emailLimpo, senha);
       router.replace('/questionario');
     } catch (e) {
       setErroLocal(mensagemDe(e));
-      sugerirCadastro();
     } finally {
       setEnviando(false);
     }
@@ -88,90 +139,89 @@ export default function Auth() {
     }
   }
 
-  const ocupado = enviando || googleCarregando;
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-fundo"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
     >
-      <View
-        className="flex-1 px-8"
-        style={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: insets.top + 40,
+          paddingBottom: insets.bottom + 32,
+        }}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text className="text-2xl font-bold text-texto">
-          {modo === 'entrar' ? 'Entrar na sua conta' : 'Criar sua conta'}
+        <Rotulo cor={cores.verde}>{modo === 'entrar' ? 'voltar ao plano' : 'começar'}</Rotulo>
+
+        <Text className="mt-3 text-3xl font-bold" style={{ color: cores.texto }}>
+          {modo === 'entrar' ? 'Entre na sua conta' : 'Crie sua conta'}
         </Text>
-        <Text className="mt-2 text-sm leading-6 text-texto-2">
+        <Text className="mt-3 text-base leading-7" style={{ color: cores.texto2 }}>
           {modo === 'entrar'
-            ? 'Entre para continuar de onde você parou.'
-            : 'Leva menos de um minuto. É só email e senha.'}
+            ? 'Continue de onde você parou.'
+            : 'Leva menos de um minuto. Só email e senha.'}
         </Text>
 
-        <View className="mt-8">
-          <Text className="mb-2 text-xs uppercase tracking-widest text-texto-3">
-            Email
-          </Text>
-          <TextInput
-            value={email}
-            onChangeText={(t) => {
-              setEmail(t);
-              if (erroLocal) setErroLocal(null);
-            }}
-            placeholder="voce@email.com"
-            placeholderTextColor="#71717A"
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-            textContentType="emailAddress"
-            editable={!ocupado}
-            className="h-14 rounded-xl border border-borda bg-superficie px-4 text-base text-texto"
-          />
-        </View>
+        <Campo
+          rotulo="email"
+          valor={email}
+          aoMudar={(v) => {
+            setEmail(v);
+            if (erroLocal) setErroLocal(null);
+          }}
+          placeholder="voce@email.com"
+          teclado="email-address"
+          capitalizar="none"
+          tipo="emailAddress"
+          aoEnviar={enviar}
+        />
 
-        <View className="mt-5">
-          <Text className="mb-2 text-xs uppercase tracking-widest text-texto-3">
-            Senha
-          </Text>
-          <TextInput
-            value={senha}
-            onChangeText={(t) => {
-              setSenha(t);
-              if (erroLocal) setErroLocal(null);
-            }}
-            placeholder="mínimo 6 caracteres"
-            placeholderTextColor="#71717A"
-            secureTextEntry
-            textContentType={modo === 'entrar' ? 'password' : 'newPassword'}
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={!ocupado}
-            onSubmitEditing={enviar}
-            returnKeyType="go"
-            className="h-14 rounded-xl border border-borda bg-superficie px-4 text-base text-texto"
-          />
-        </View>
+        <Campo
+          rotulo="senha"
+          valor={senha}
+          aoMudar={(v) => {
+            setSenha(v);
+            if (erroLocal) setErroLocal(null);
+          }}
+          placeholder="mínimo 6 caracteres"
+          seguro
+          capitalizar="none"
+          tipo={modo === 'entrar' ? 'password' : 'newPassword'}
+          aoEnviar={enviar}
+        />
 
         {erroExibido ? (
-          <View className="mt-5 flex-row rounded-xl border border-erro/40 bg-erro/10 p-4">
-            <AlertTriangle size={18} color="#DC2626" className="mt-0.5" />
-            <Text className="ml-3 flex-1 text-sm leading-5 text-texto">{erroExibido}</Text>
+          <View className="mt-6">
+            <Aviso texto={erroExibido} tom="erro" Icone={TriangleAlert} />
           </View>
         ) : null}
 
-        <View className="mt-8">
-          <Botao
-            titulo={modo === 'entrar' ? 'Entrar' : 'Criar conta'}
-            onPress={enviar}
-            carregando={enviando}
-            disabled={ocupado || Boolean(configFalta)}
-          />
-        </View>
+        <Botao
+          titulo={modo === 'entrar' ? 'Entrar' : 'Criar conta'}
+          onPress={enviar}
+          carregando={enviando}
+          disabled={ocupado || Boolean(configFalta)}
+          className="mt-8"
+        />
 
-        <View className="my-7 flex-row items-center">
-          <View className="h-px flex-1 bg-borda" />
-          <Text className="mx-3 text-xs uppercase tracking-widest text-texto-3">ou</Text>
-          <View className="h-px flex-1 bg-borda" />
+        {/* Só aparece quando o email é válido e não tem conta — é a ação útil. */}
+        {podeSugerirCadastro && modo === 'entrar' ? (
+          <Pressable onPress={() => trocarModo('cadastrar')} className="mt-4 items-center py-2">
+            <Text className="text-sm font-semibold" style={{ color: cores.verde }}>
+              Criar conta com esse email
+            </Text>
+          </Pressable>
+        ) : null}
+
+        <View className="my-8 flex-row items-center gap-4">
+          <View className="h-px flex-1" style={{ backgroundColor: cores.borda }} />
+          <Text className="text-caption uppercase" style={{ color: cores.texto4 }}>
+            ou
+          </Text>
+          <View className="h-px flex-1" style={{ backgroundColor: cores.borda }} />
         </View>
 
         <Pressable
@@ -179,49 +229,56 @@ export default function Auth() {
           accessibilityLabel="Entrar com Google"
           onPress={comGoogle}
           disabled={ocupado || Boolean(configFalta)}
-          className="h-14 w-full flex-row items-center justify-center gap-3 rounded-xl border border-borda bg-superficie active:opacity-80"
+          className="h-14 w-full flex-row items-center justify-center gap-3 rounded-xl border active:opacity-80"
+          style={{ backgroundColor: cores.superficie, borderColor: cores.borda }}
         >
-          <View className="h-6 w-6 items-center justify-center rounded-full bg-texto">
-            <Text className="text-sm font-bold text-fundo">G</Text>
+          <View
+            className="h-6 w-6 items-center justify-center rounded-full"
+            style={{ backgroundColor: cores.texto }}
+          >
+            <Text className="text-sm font-bold" style={{ color: cores.fundo }}>
+              G
+            </Text>
           </View>
-          <Text className="text-base font-medium text-texto">
+          <Text className="text-base font-medium" style={{ color: cores.texto }}>
             {googleCarregando ? 'Abrindo o Google…' : 'Entrar com Google'}
           </Text>
         </Pressable>
 
-        <View className="mt-auto pt-8">
-          {MODO_SEM_BACKEND ? (
-            <>
-              <Pressable
-                onPress={() => router.replace('/questionario')}
-                disabled={ocupado}
-                className="mb-6 items-center rounded-xl border border-borda py-4 active:opacity-80"
-              >
-                <Text className="text-sm font-semibold text-texto-2">
-                  Continuar sem conta
-                </Text>
-              </Pressable>
-
-              <Text className="text-center text-xs leading-5 text-texto-3">
-                Modo de desenvolvimento: sem Supabase, o app funciona só com
-                estado local e nada é salvo na nuvem.
+        {MODO_SEM_BACKEND ? (
+          <View className="mt-10">
+            <Pressable
+              onPress={() => router.replace('/questionario')}
+              disabled={ocupado}
+              className="items-center rounded-xl border py-4 active:opacity-80"
+              style={{ backgroundColor: cores.fundo2, borderColor: cores.borda }}
+            >
+              <Text className="text-sm font-semibold" style={{ color: cores.texto2 }}>
+                Continuar sem conta
               </Text>
-            </>
-          ) : null}
+            </Pressable>
 
-          <Text className="mt-4 text-center text-sm text-texto-2">
+            <Text
+              className="mt-4 text-center text-caption leading-5"
+              style={{ color: cores.texto4 }}
+            >
+              Modo de desenvolvimento: sem Supabase o app funciona só com estado
+              local e nada é salvo na nuvem.
+            </Text>
+          </View>
+        ) : null}
+
+        <View className="mt-10 flex-row justify-center gap-2">
+          <Text className="text-sm" style={{ color: cores.texto3 }}>
             {modo === 'entrar' ? 'Ainda não tem conta?' : 'Já tem conta?'}
           </Text>
-          <Pressable
-            onPress={() => trocarModo(modo === 'entrar' ? 'cadastrar' : 'entrar')}
-            className="mt-2 py-2"
-          >
-            <Text className="text-center text-sm font-semibold text-verde">
-              {modo === 'entrar' ? 'Criar conta' : 'Entrar na conta existente'}
+          <Pressable onPress={() => trocarModo(modo === 'entrar' ? 'cadastrar' : 'entrar')}>
+            <Text className="text-sm font-semibold" style={{ color: cores.verde }}>
+              {modo === 'entrar' ? 'Criar conta' : 'Entrar'}
             </Text>
           </Pressable>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

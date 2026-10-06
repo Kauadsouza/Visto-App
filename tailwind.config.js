@@ -2,23 +2,62 @@
 module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
-  // O padrão do Tailwind é 'media', que faz o NativeWindDerivar o esquema de
+  // O padrão do Tailwind é 'media', que faz o NativeWind derivar o esquema de
   // cor do sistema. Na web o navigator chama setColorScheme() e o NativeWind
   // lança: "Cannot manually set color scheme, as dark mode is type 'media'".
   //
   // 'class' resolve. E não custa nada aqui: o app não usa nenhuma variante
-  // `dark:` — o fundo escuro vem de cores explícitas (bg-fundo, text-texto),
-  // então a paleta continua idêntica nos dois esquemas.
+  // `dark:` — o fundo escuro vem de cores explícitas, então a paleta continua
+  // idêntica nos dois esquemas.
   darkMode: 'class',
+
   theme: {
+    // ---------------------------------------------------------------
+    // Tipografia
+    //
+    // lineHeight explícito em toda parte: no React Native o padrão do
+    // navegador não existe, e fonte sem lineHeight corta acento e descida
+    // da letra. Os pares são [tamanho, entrelinha].
+    // ---------------------------------------------------------------
+    fontSize: {
+      // rótulos pequenos, em maiúscula, com respiro entre letras
+      'label': ['11px', { lineHeight: '14px', letterSpacing: '1.4px' }],
+      'caption': ['12px', { lineHeight: '17px' }],
+      'sm': ['14px', { lineHeight: '21px' }],
+      'base': ['16px', { lineHeight: '24px' }],
+      'lg': ['18px', { lineHeight: '27px' }],
+      'xl': ['20px', { lineHeight: '28px' }],
+      '2xl': ['24px', { lineHeight: '31px' }],
+      '3xl': ['30px', { lineHeight: '37px' }],
+      '4xl': ['36px', { lineHeight: '43px' }],
+    },
+
+    // ---------------------------------------------------------------
+    // Raios
+    // ---------------------------------------------------------------
+    borderRadius: {
+      sm: '8px',
+      DEFAULT: '12px',
+      lg: '16px',
+      xl: '20px',
+      '2xl': '26px',
+      '3xl': '32px',
+      full: '9999px',
+    },
+
     extend: {
       colors: {
-        // Fundo escuro
+        // Camadas de fundo, do mais fundo ao mais elevado
         fundo: '#0A0A0A',
-        'fundo-2': '#0F1115',
-        superficie: '#161A1D',
-        'superficie-2': '#1F2429',
-        borda: '#2A2F34',
+        'fundo-2': '#0E1116',
+        superficie: '#14181D',
+        'superficie-2': '#1B2026',
+        'superficie-3': '#232930',
+
+        // Bordas: a hierarquia vem daqui, não de sombra
+        borda: '#22282F',
+        'borda-forte': '#323A43',
+        'borda-verde': '#1F7A3C',
 
         // Verde primário
         verde: {
@@ -35,16 +74,21 @@ module.exports = {
           900: '#14532D',
         },
 
-        // Texto
         texto: '#FFFFFF',
-        'texto-2': '#A1A1AA',
-        'texto-3': '#71717A',
+        // Secondary mais claro que antes: #A1A1AA ficava washes out sobre preto
+        'texto-2': '#C2C9D1',
+        'texto-3': '#8A929C',
+        'texto-4': '#5F6873',
 
-        // Semânticos
-        sucesso: '#16A34A',
-        atencao: '#F59E0B',
-        erro: '#DC2626',
+        atencao: '#F5A524',
+        erro: '#EF4444',
         info: '#3B82F6',
+      },
+
+      spacing: {
+        // Ritmo de respiro para telas de conteúdo longo
+        18: '72px',
+        22: '88px',
       },
     },
   },

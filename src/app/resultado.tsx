@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronRight, Info, TriangleAlert } from 'lucide-react-native';
 
-import { Cabecalho } from '@/components/Cabecalho';
+import { Aviso, Card, Etiqueta, Numero, Rotulo } from '@/components/ui';
 import { avisoComplementares, diagnosticar, type Rota } from '@/lib/diagnostico';
 import { AVISO_CUSTOS } from '@/lib/planos';
 import { corViabilidade, cores, rotuloViabilidade } from '@/theme';
@@ -12,21 +12,25 @@ import { useQuestionario } from '@/store/questionario';
 
 const moeda = (v: number) => `R$ ${v.toLocaleString('pt-BR')}`;
 
+/** Preenchimento da barra de viabilidade. Alto = 100, médio = 60, baixo = 25. */
+const LARGURA_VIABILIDADE = { alta: 100, media: 60, baixa: 25 } as const;
+
 export default function Resultado() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { respostas, indice, irPara, reiniciar } = useQuestionario();
+  const { respostas, reiniciar, irPara } = useQuestionario();
 
   const resultado = useMemo(() => diagnosticar(respostas), [respostas]);
 
-  // Perfil incompleto não tem diagnóstico para mostrar: o caminho certo é
-  // voltar a perguntar, não inventar um resultado.
   if (!resultado.completo) {
     return (
       <View className="flex-1 bg-fundo">
-        <Cabecalho titulo="Seu diagnóstico" />
+        <View style={{ paddingTop: insets.top }}>
+          <CabecalhoSimples titulo="Seu diagnóstico" />
+        </View>
+
         <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-center text-base leading-7 text-texto-2">
+          <Text className="text-center text-base leading-7" style={{ color: cores.texto2 }}>
             Faltam algumas respostas para montar seu diagnóstico. Volte e
             complete o questionário.
           </Text>
@@ -35,9 +39,10 @@ export default function Resultado() {
               reiniciar();
               irPara(0);
             }}
-            className="mt-8 rounded-xl border border-borda bg-superficie px-6 py-4 active:opacity-80"
+            className="mt-8 rounded-xl border px-6 py-4 active:opacity-80"
+            style={{ backgroundColor: cores.superficie, borderColor: cores.borda }}
           >
-            <Text className="text-base font-semibold text-verde">
+            <Text className="text-base font-semibold" style={{ color: cores.verde }}>
               Refazer questionário
             </Text>
           </Pressable>
@@ -49,58 +54,65 @@ export default function Resultado() {
   return (
     <View className="flex-1 bg-fundo">
       <View style={{ paddingTop: insets.top }}>
-        <Cabecalho titulo="Seu diagnóstico" />
+        <CabecalhoSimples
+          titulo="Seu diagnóstico"
+          subtitulo={`${resultado.rotas.length} caminhos para o seu perfil`}
+        />
       </View>
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 32 }}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}
       >
-        <View className="mb-5 flex-row rounded-xl border border-borda bg-superficie p-4">
-          <Info size={18} color={cores.texto3} className="mt-0.5" />
-          <Text className="ml-3 flex-1 text-xs leading-5 text-texto-2">
-            Este resultado é uma estimativa baseada no seu perfil. Não é
-            assessoria jurídica. Consulte um advogado imigracionista para
-            decisão final.
-          </Text>
-        </View>
+        <Aviso
+          texto="Este resultado é uma estimativa baseada no seu perfil. Não é assessoria jurídica. Consulte um advogado imigracionista para decisão final."
+          Icone={Info}
+        />
 
         {avisoComplementares(resultado.avisos).map((aviso) => (
-          <View
-            key={aviso}
-            className="mb-3 rounded-xl border border-atencao/40 bg-atencao/10 p-4"
-          >
-            <Text className="text-sm leading-5 text-texto">{aviso}</Text>
+          <View key={aviso} className="mt-3">
+            <Aviso texto={aviso} tom="atencao" />
           </View>
         ))}
 
-        <Text className="mt-2 text-xs uppercase tracking-widest text-texto-3">
-          {`${resultado.rotas.length} caminhos para o seu perfil`}
-        </Text>
-
-        <View className="mt-3 flex-row rounded-xl border border-atencao/40 bg-atencao/10 p-4">
-          <TriangleAlert size={16} color={cores.atencao} className="mt-0.5" />
-          <Text className="ml-3 flex-1 text-xs leading-5 text-texto-2">
-            {AVISO_CUSTOS}
-          </Text>
+        <View className="mt-5">
+          <Aviso texto={AVISO_CUSTOS} tom="atencao" Icone={TriangleAlert} />
         </View>
 
-        {resultado.rotas.map((rota) => (
-          <CardRota key={rota.slug} rota={rota} />
-        ))}
+        <View className="mt-6">
+          {resultado.rotas.map((rota) => (
+            <CardRota key={rota.slug} rota={rota} />
+          ))}
+        </View>
 
         <Pressable
           onPress={() => {
             reiniciar();
             irPara(0);
           }}
-          className="mt-4 items-center py-4"
+          className="mt-8 items-center py-4"
         >
-          <Text className="text-sm text-texto-3">
+          <Text className="text-sm" style={{ color: cores.texto3 }}>
             Refazer o questionário
           </Text>
         </Pressable>
       </ScrollView>
+    </View>
+  );
+}
+
+/** Cabeçalho sem o botão de sair — o resultado não é tela protegida ainda. */
+function CabecalhoSimples({ titulo, subtitulo }: { titulo: string; subtitulo?: string }) {
+  return (
+    <View className="px-6 pb-5 pt-2">
+      <Text className="text-lg font-semibold" style={{ color: cores.texto }}>
+        {titulo}
+      </Text>
+      {subtitulo ? (
+        <Text className="mt-0.5 text-caption" style={{ color: cores.texto3 }}>
+          {subtitulo}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -110,60 +122,65 @@ function CardRota({ rota }: { rota: Rota }) {
   const cor = corViabilidade[rota.viabilidade];
 
   return (
-    <View className="mt-4 rounded-2xl border border-borda bg-superficie p-5">
-      <View className="flex-row items-start justify-between">
-        <Text className="flex-1 pr-3 text-lg font-bold text-texto">
+    <Card nivel={1} className="mt-4 p-5">
+      <View className="flex-row items-start justify-between gap-3">
+        <Text className="flex-1 text-xl font-bold" style={{ color: cores.texto }}>
           {rota.nome}
         </Text>
+        <Etiqueta texto={rotuloViabilidade[rota.viabilidade]} cor={cor} />
+      </View>
+
+      {/* Barra fina na cor da viabilidade: leitura do risco antes de ler o texto */}
+      <View
+        className="mt-4 h-1 w-full overflow-hidden rounded-full"
+        style={{ backgroundColor: cores.superficie3 }}
+      >
         <View
-          className="rounded-full px-3 py-1"
-          style={{ backgroundColor: `${cor}22` }}
-        >
-          <Text className="text-xs font-semibold" style={{ color: cor }}>
-            {rotuloViabilidade[rota.viabilidade]}
-          </Text>
-        </View>
+          className="h-full rounded-full"
+          style={{ width: `${LARGURA_VIABILIDADE[rota.viabilidade]}%`, backgroundColor: cor }}
+        />
       </View>
 
-      <Text className="mt-3 text-sm leading-6 text-texto-2">{rota.resumo}</Text>
-
-      <View className="mt-4 flex-row gap-6">
-        <View>
-          <Text className="text-xs uppercase tracking-widest text-texto-3">
-            Custo estimado
-          </Text>
-          <Text className="mt-1 text-sm font-semibold text-texto">
-            {`${moeda(rota.custoMin)} – ${moeda(rota.custoMax)}`}
-          </Text>
-        </View>
-        <View>
-          <Text className="text-xs uppercase tracking-widest text-texto-3">
-            Tempo estimado
-          </Text>
-          <Text className="mt-1 text-sm font-semibold text-texto">
-            {`${rota.tempoMeses[0]} a ${rota.tempoMeses[1]} meses`}
-          </Text>
-        </View>
-      </View>
-
-      <Text className="mt-5 text-xs uppercase tracking-widest text-texto-3">
-        O que você vai precisar fazer
+      <Text className="mt-4 text-sm leading-6" style={{ color: cores.texto2 }}>
+        {rota.resumo}
       </Text>
-      {rota.passos.map((passo, i) => (
-        <View key={passo} className="mt-2 flex-row">
-          <Text className="mr-2 text-sm font-semibold text-verde">{`${i + 1}.`}</Text>
-          <Text className="flex-1 text-sm leading-5 text-texto-2">{passo}</Text>
-        </View>
-      ))}
+
+      {/* Custo e prazo em colunas — os dois números que a pessoa mais procura */}
+      <View className="mt-5 flex-row gap-6">
+        <Numero rotulo="Custo estimado" valor={`${moeda(rota.custoMin)} – ${moeda(rota.custoMax)}`} tamanho={17} />
+        <Numero rotulo="Tempo estimado" valor={`${rota.tempoMeses[0]}–${rota.tempoMeses[1]} meses`} tamanho={17} />
+      </View>
+
+      <View className="mt-6">
+        <Rotulo>O que você vai precisar fazer</Rotulo>
+        {rota.passos.map((passo, i) => (
+          <View key={passo} className="mt-3 flex-row">
+            <View
+              className="mr-3 h-5 w-5 items-center justify-center rounded-full"
+              style={{ backgroundColor: `${cores.verde}1F` }}
+            >
+              <Text className="text-caption font-bold" style={{ color: cores.verde }}>
+                {`${i + 1}`}
+              </Text>
+            </View>
+            <Text className="flex-1 text-sm leading-5" style={{ color: cores.texto2 }}>
+              {passo}
+            </Text>
+          </View>
+        ))}
+      </View>
 
       <Pressable
         accessibilityRole="button"
         onPress={() => router.push({ pathname: '/plano', params: { rota: rota.slug } })}
-        className="mt-5 flex-row items-center justify-center rounded-xl border border-verde bg-verde/10 py-4 active:opacity-80"
+        className="mt-6 flex-row items-center justify-center rounded-xl border py-4 active:opacity-80"
+        style={{ backgroundColor: `${cores.verde}14`, borderColor: cores.bordaVerde }}
       >
-        <Text className="font-semibold text-verde">Ver meu plano completo</Text>
-        <ChevronRight size={18} color={cores.verde} className="ml-1" />
+        <Text className="font-semibold" style={{ color: cores.verde }}>
+          Ver meu plano completo
+        </Text>
+        <ChevronRight size={17} color={cores.verde} className="ml-1" />
       </Pressable>
-    </View>
+    </Card>
   );
 }
