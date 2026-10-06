@@ -44,3 +44,6 @@ yarn-error.*
 
 # env de teste local (service_role — nunca versionar)
 supabase/.env.local
+
+.vercel
+.env*

@@ -22,6 +22,8 @@ export default function Resultado() {
   const resultado = useMemo(() => diagnosticar(respostas), [respostas]);
 
   if (!resultado.completo) {
+    const temRespostas = Object.values(respostas).some((v) => v.trim().length > 0);
+
     return (
       <Tela>
       <View className="flex-1">
@@ -29,21 +31,34 @@ export default function Resultado() {
 
         <View className="flex-1 items-center justify-center px-6">
           <Text className="text-center text-base leading-7" style={{ color: cores.texto2 }}>
-            Faltam algumas respostas para montar seu diagnóstico. Volte e
-            complete o questionário.
+            {temRespostas
+              ? 'Faltam algumas respostas para montar seu diagnóstico. Complete o questionário para ver as três rotas.'
+              : 'Responda 8 perguntas e você vê quais caminhos de imigração são viáveis para o seu perfil.'}
           </Text>
-          <Pressable
-            onPress={() => {
-              reiniciar();
-              irPara(0);
-            }}
-            className="mt-8 rounded-xl border px-6 py-4 active:opacity-80"
-            style={{ backgroundColor: cores.superficie, borderColor: cores.borda }}
-          >
-            <Text className="text-base font-semibold" style={{ color: cores.verde }}>
-              Refazer questionário
-            </Text>
-          </Pressable>
+
+          <View className="mt-8 w-full">
+            <Pressable
+              onPress={() => router.push(temRespostas ? '/questionario' : '/')}
+              className="h-14 w-full items-center justify-center rounded-xl border active:opacity-80"
+              style={{ backgroundColor: cores.verde, borderColor: cores.verde }}
+            >
+              <Text className="text-base font-semibold" style={{ color: '#FFFFFF' }}>
+                {temRespostas ? 'Continuar questionário' : 'Começar questionário'}
+              </Text>
+            </Pressable>
+
+            {temRespostas ? (
+              <Pressable
+                onPress={() => router.replace('/')}
+                className="mt-3 h-12 w-full items-center justify-center rounded-xl border active:opacity-80"
+                style={{ backgroundColor: cores.superficie, borderColor: cores.borda }}
+              >
+                <Text className="text-sm font-semibold" style={{ color: cores.texto2 }}>
+                  Voltar para a home
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
       </View>
       </Tela>
