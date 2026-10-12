@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Info, TriangleAlert } from 'lucide-react-native';
+import { ChevronRight, Info, Sparkles, TriangleAlert } from 'lucide-react-native';
 
 import { Tela } from '@/components/Tela';
-import { Aviso, Card, Etiqueta, Numero, Rotulo } from '@/components/ui';
+import { Aviso, Card, Etiqueta, Numero, Rotulo, Selo } from '@/components/ui';
 import { avisoComplementares, diagnosticar, type Rota } from '@/lib/diagnostico';
 import { AVISO_CUSTOS } from '@/lib/planos';
 import { corViabilidade, cores, rotuloViabilidade } from '@/theme';
@@ -95,8 +95,8 @@ export default function Resultado() {
         </View>
 
         <View className="mt-6">
-          {resultado.rotas.map((rota) => (
-            <CardRota key={rota.slug} rota={rota} />
+          {resultado.rotas.map((rota, i) => (
+            <CardRota key={rota.slug} rota={rota} destaque={i === 0} />
           ))}
         </View>
 
@@ -120,12 +120,13 @@ export default function Resultado() {
 /** Cabeçalho sem o botão de sair — o resultado não é tela protegida ainda. */
 function CabecalhoSimples({ titulo, subtitulo }: { titulo: string; subtitulo?: string }) {
   return (
-    <View className="px-6 pb-5 pt-2">
-      <Text className="text-lg font-semibold" style={{ color: cores.texto }}>
+    <View className="px-7 pb-5 pt-4">
+      <Rotulo cor={cores.marinho}>diagnóstico</Rotulo>
+      <Text className="mt-2 font-serif text-3xl font-bold" style={{ color: cores.texto }}>
         {titulo}
       </Text>
       {subtitulo ? (
-        <Text className="mt-0.5 text-caption" style={{ color: cores.texto3 }}>
+        <Text className="mt-2 text-base leading-6" style={{ color: cores.texto3 }}>
           {subtitulo}
         </Text>
       ) : null}
@@ -133,12 +134,18 @@ function CabecalhoSimples({ titulo, subtitulo }: { titulo: string; subtitulo?: s
   );
 }
 
-function CardRota({ rota }: { rota: Rota }) {
+function CardRota({ rota, destaque }: { rota: Rota; destaque: boolean }) {
   const router = useRouter();
   const cor = corViabilidade[rota.viabilidade];
 
   return (
-    <Card nivel={1} className="mt-4 p-5">
+    <Card nivel={1} borda={destaque ? cores.bordaMarca : undefined} className="mt-4 p-5">
+      {destaque ? (
+        <View className="mb-4 flex-row items-center gap-2">
+          <Selo texto="recomendada para você" Icone={Sparkles} />
+        </View>
+      ) : null}
+
       <View className="flex-row items-start justify-between gap-3">
         <Text className="flex-1 font-serif text-xl font-bold" style={{ color: cores.texto }}>
           {rota.nome}

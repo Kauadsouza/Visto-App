@@ -1,15 +1,23 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CalendarDays, Check, Lock, TriangleAlert } from 'lucide-react-native';
+import { CalendarDays, Lock, TriangleAlert } from 'lucide-react-native';
 
 import { Botao } from '@/components/Botao';
 import { Tela } from '@/components/Tela';
-import { Aviso, Barra, Card, Numero, Rotulo, TituloSecao } from '@/components/ui';
+import { Trilha } from '@/components/Trilha';
+import { Aviso, Barra, Card, Numero, Rotulo } from '@/components/ui';
 import { diagnosticar } from '@/lib/diagnostico';
 import type { ItemPlano } from '@/lib/database.types';
 import { calcularContador, emAnos, PAISES_SCHENGEN } from '@/lib/permissoes';
-import { agruparPorFase, AVISO_CUSTOS, itensDaRota, moeda } from '@/lib/planos';
+import {
+  agruparPorFase,
+  AVISO_CUSTOS,
+  FASES,
+  idDoItem,
+  itensDaRota,
+  moeda,
+} from '@/lib/planos';
 import { ITENS_FREE, temAcesso, usePlano } from '@/store/plano';
 import { useQuestionario } from '@/store/questionario';
 import { cores } from '@/theme';
@@ -21,7 +29,7 @@ export default function Plano() {
   const { rota } = useLocalSearchParams<{ rota?: string }>();
 
   const { respostas } = useQuestionario();
-  const { assinatura, concluidos, viagens } = usePlano();
+  const { assinatura, concluidos, viagens, alternarItem } = usePlano();
 
   const slug = useMemo(() => {
     if (rota) return rota;
@@ -35,28 +43,62 @@ export default function Plano() {
   const grupos = useMemo(() => agruparPorFase(itens), [itens]);
   const percentual = itens.length ? (concluidos.length / itens.length) * 100 : 0;
 
+  // O id do item é calculado uma vez e repassado à trilha, para que o toque
+  // aqui e a contagem no topo nunca discordem do que a tela marca.
+  const idDe = useCallback(
+    (fase: (typeof FASES)[number]['id'], indiceNoGrupo: number) =>
+      idDoItem(itens, fase, indiceNoGrupo, grupos),
+    [itens, grupos]
+  );
+
+  const quantoGasto = useMemo(
+    () =>
+      itens.reduce(
+        (soma, item, i) => (concluidos.includes(idDe(item.fase, i)) ? soma + item.custo : soma),
+        0
+      ),
+    [itens, concluidos, idDe]
+  );
+
   return (
     <Tela>
     <View className="flex-1">
       <View>
         <ContadorDias contador={contador} />
 
-        <View className="px-6 pb-5 pt-4">
-          <View className="flex-row items-baseline justify-between">
-            <Text className="text-lg font-semibold" style={{ color: cores.texto }}>
-              Seu plano
-            </Text>
-            <Text className="text-sm" style={{ color: cores.texto3 }}>
-              {`${concluidos.length} de ${itens.length}`}
-            </Text>
+        <View className="px-7 pb-5 pt-6">
+          <Rotulo cor={cores.marinho}>sua trilha</Rotulo>
+          <Text className="mt-2 font-serif text-3xl font-bold" style={{ color: cores.texto }}>
+            {rotuloRota(itens, slug)}
+          </Text>
+
+          <View className="mt-5 flex-row items-end justify-between">
+            <View>
+              <Text className="text-caption" style={{ color: cores.texto3 }}>
+                {`${concluidos.length} de ${itens.length} passos feitos`}
+              </Text>
+              <Text className="mt-1 text-2xl font-bold" style={{ color: cores.marinho }}>
+                {`${Math.round(percentual)}%`}
+              </Text>
+            </View>
+            {quantoGasto > 0 ? (
+              <View className="items-end">
+                <Text className="text-caption" style={{ color: cores.texto3 }}>
+                  já investido
+                </Text>
+                <Text className="mt-1 text-2xl font-bold" style={{ color: cores.texto }}>
+                  {moeda(quantoGasto)}
+                </Text>
+              </View>
+            ) : null}
           </View>
 
-          <View className="mt-3">
-            <Barra valor={percentual} />
+          <View className="mt-4">
+            <Barra valor={percentual} altura={6} />
           </View>
 
-          <Pressable onPress={() => router.replace('/resultado')} className="mt-3 py-1">
-            <Text className="text-caption" style={{ color: cores.marinho }}>
+          <Pressable onPress={() => router.replace('/resultado')} className="mt-4 py-1">
+            <Text className="text-caption font-semibold" style={{ color: cores.marinho }}>
               Trocar de rota
             </Text>
           </Pressable>
@@ -65,20 +107,26 @@ export default function Plano() {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: 28, paddingBottom: 40 }}
       >
         <Aviso texto={AVISO_CUSTOS} tom="atencao" Icone={TriangleAlert} />
 
-        {/* Índice global do item, para o paywall valer sobre a lista inteira —
-            e não fase por fase, senão daria para ver tudo só pulando de fase. */}
-        <ChecklistAgrupado grupos={grupos} assinado={assinado} concluidos={concluidos} />
+        <View className="mt-6">
+          <Trilha
+            grupos={grupos}
+            idDe={idDe}
+            concluidos={concluidos}
+            aoAlternar={alternarItem}
+            assinado={assinado}
+          />
+        </View>
 
         {assinado ? (
           <Botao
             titulo="Gerenciar assinatura"
             variante="secundario"
             onPress={() => router.push('/pagamento')}
-            className="mt-10"
+            className="mt-6"
           />
         ) : (
           <Paywall total={itens.length} visiveis={ITENS_FREE} />
@@ -89,130 +137,14 @@ export default function Plano() {
   );
 }
 
-function ChecklistAgrupado({
-  grupos,
-  assinado,
-  concluidos,
-}: {
-  grupos: ReturnType<typeof agruparPorFase>;
-  assinado: boolean;
-  concluidos: string[];
-}) {
-  const { alternarItem } = usePlano();
-
-  // Posição de cada grupo na lista inteira (contando através dos grupos). É
-  // calculado antes do JSX, para o render não depender de um contador que muda
-  // enquanto a árvore é montada — isso fazia o número vir errado quando o
-  // React reordenava a renderização.
-  const inicioDe: number[] = [];
-  let total = 0;
-  for (const grupo of grupos) {
-    inicioDe.push(total);
-    total += grupo.itens.length;
-  }
-
-  return (
-    <>
-      {grupos.map((grupo, indiceGrupo) => {
-        if (grupo.itens.length === 0) return null;
-
-        return (
-          <View key={grupo.fase}>
-            <TituloSecao>{grupo.nome}</TituloSecao>
-
-            {grupo.itens.map((item, indiceNoGrupo) => {
-              const indiceGlobal = inicioDe[indiceGrupo] + indiceNoGrupo;
-              const id = `${grupo.fase}-${indiceGlobal}`;
-              const bloqueado = !assinado && indiceGlobal >= ITENS_FREE;
-
-              return bloqueado ? (
-                <ItemBloqueado key={id} item={item} />
-              ) : (
-                <ItemChecklist
-                  key={id}
-                  id={id}
-                  item={item}
-                  concluido={concluidos.includes(id)}
-                  aoAlternar={alternarItem}
-                />
-              );
-            })}
-          </View>
-        );
-      })}
-    </>
-  );
-}
-
-function ItemChecklist({
-  item,
-  concluido,
-  id,
-  aoAlternar,
-}: {
-  id: string;
-  item: ItemPlano;
-  concluido: boolean;
-  aoAlternar: (id: string) => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="checkbox"
-      accessibilityState={{ checked: concluido }}
-      onPress={() => aoAlternar(id)}
-      className="mt-3 flex-row rounded-xl border p-4 active:opacity-80"
-      style={{
-        backgroundColor: concluido ? cores.fundo2 : cores.superficie,
-        borderColor: concluido ? cores.bordaMarca : cores.borda,
-      }}
-    >
-      <View
-        className="mt-0.5 h-6 w-6 items-center justify-center rounded-lg border"
-        style={{
-          borderColor: concluido ? cores.marinho : cores.bordaForte,
-          backgroundColor: concluido ? cores.marinho : 'transparent',
-        }}
-      >
-        {concluido ? <Check size={14} color={cores.texto} /> : null}
-      </View>
-
-      <View className="ml-3 flex-1">
-        <Text
-          className="text-base font-semibold"
-          style={{
-            color: concluido ? cores.texto3 : cores.texto,
-            textDecorationLine: concluido ? 'line-through' : 'none',
-          }}
-        >
-          {item.titulo}
-        </Text>
-        <Text className="mt-1 text-sm leading-5" style={{ color: cores.texto2 }}>
-          {item.descricao}
-        </Text>
-
-        <View className="mt-3 flex-row items-center justify-between">
-          <Rotulo>{item.prazo}</Rotulo>
-          <Text
-            className="text-caption font-semibold"
-            style={{ color: item.custo > 0 ? cores.marinho : cores.texto4 }}
-          >
-            {moeda(item.custo)}
-          </Text>
-        </View>
-      </View>
-    </Pressable>
-  );
-}
-
-function ItemBloqueado({ item }: { item: ItemPlano }) {
-  return (
-    <Card nivel={0} className="mt-3 flex-row items-center p-4">
-      <Lock size={15} color={cores.texto4} />
-      <Text className="ml-3 flex-1 text-base" style={{ color: cores.texto4 }}>
-        {item.titulo}
-      </Text>
-    </Card>
-  );
+/** Nome da rota pelo slug, sem trazer a tabela de diagnóstico para a tela. */
+function rotuloRota(itens: ItemPlano[], slug: string): string {
+  const nomes: Record<string, string> = {
+    'reino-unidos-estudo': 'Inglaterra',
+    'espanha-estudo': 'Espanha',
+    'espanha-digital-nomad': 'Espanha',
+  };
+  return nomes[slug] ?? 'Seu caminho';
 }
 
 function Paywall({ total, visiveis }: { total: number; visiveis: number }) {
