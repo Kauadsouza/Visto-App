@@ -1,22 +1,18 @@
 /**
  * =============================================================
- * Cliente da IA auxiliar
+ * Chat com a base local
  * =============================================================
  *
- * Esqueleto do cliente. SEM BACKEND esta função não funciona de verdade.
- * O que existe aqui:
+ * Sem LLM, sem servidor. O motor está em src/lib/ia.ts: para cada
+ * pergunta, devolve a melhor resposta (regex + score) com fontes.
  *
- *   1. Validação de input e formato da mensagem
- *   2. Streaming de resposta (a Edge Function envia chunks em JSONL)
- *   3. Limite de 5 mensagens/dia por usuário
- *
- * O que entra na fase 2:
- *   - Edge Function `chat` que valida a assinatura e chama Claude
- *   - Persistência do histórico em `mensagens_chat` no Supabase
- *   - System prompt com fontes oficiais de imigração e regra "não
- *     invente"
+ * Se um dia houver Edge Function, é substituir `consultarIA` por uma
+ * chamada ao backend. A forma do retorno continua a mesma:
+ * { texto, fontes, confianca }.
  * =============================================================
  */
+
+import { consultarIA, type RespostaIA } from '@/lib/ia';
 
 export type Papel = 'usuario' | 'assistente';
 
@@ -28,11 +24,18 @@ export interface Mensagem {
   criadoEm: number;
   /** Carregando streaming no momento. */
   carregando?: boolean;
+  /** Fontes citadas pela IA na resposta. */
+  fontes?: string[];
+  /** Nível de confiança (0-1). Abaixo de 0.3 não apareceu intent. */
+  confianca?: number;
 }
+
+export const LIMITE_MENSAGENS_DIA = 5;
+export const TAMANHO_MAX_INPUT = 1500;
 
 export interface LimiteUltrapassado {
   ok: false;
-  motivo: 'limite-diario' | 'sem-assinatura' | 'input-invalido' | 'muito-longo';
+  motivo: 'limite-diario' | 'input-invalido' | 'muito-longo' | 'sem-conta';
   mensagem: string;
 }
 export interface Permissao {
@@ -41,10 +44,7 @@ export interface Permissao {
 }
 export type Resultado = Permissao | LimiteUltrapassado;
 
-const LIMITE_POR_DIA = 5;
-const TAMANHO_MAX_INPUT = 1500;
-
-/** Valida o que a pessoa digitou antes de mandar para a Edge Function. */
+/** Valida o que a pessoa digitou. */
 export function validarInput(texto: string): Resultado {
   const t = texto.trim();
   if (t.length === 0) {
@@ -57,28 +57,28 @@ export function validarInput(texto: string): Resultado {
       mensagem: `Limite de ${TAMANHO_MAX_INPUT} caracteres.`,
     };
   }
-  return { ok: true, restantes: LIMITE_POR_DIA };
+  return { ok: true, restantes: LIMITE_MENSAGENS_DIA };
 }
 
-export const LIMITE_MENSAGENS_DIA = LIMITE_POR_DIA;
-export const TAMANHO_MAX = TAMANHO_MAX_INPUT;
+/** Conta quantas mensagens o usuário mandou hoje. */
+export function mensagensHoje(historico: Mensagem[]): number {
+  const inicioDoDia = new Date();
+  inicioDoDia.setHours(0, 0, 0, 0);
+  const ts = inicioDoDia.getTime();
+  return historico.filter((m) => m.papel === 'usuario' && m.criadoEm >= ts).length;
+}
 
-/**
- * Placeholder da chamada. Quando a Edge Function existir, ela será o destino
- * desta Promise. Por enquanto devolve uma mensagem fixa, marcada como
- * `placeholder: true` para a UI deixar claro que não é resposta de IA.
- */
-export async function enviarMensagem(
-  _historico: Mensagem[],
-  _input: string
-): Promise<Mensagem> {
-  await new Promise((r) => setTimeout(r, 400));
+/** Envia a pergunta para a IA local e devolve a resposta. */
+export function enviarMensagem(_historico: Mensagem[], input: string): Mensagem {
+  // Simula latência só para a UI mostrar o estado "carregando" brevemente.
+  const resposta: RespostaIA = consultarIA(input);
+
   return {
     id: `${Date.now()}`,
     papel: 'assistente',
-    texto:
-      'A IA auxiliar entra na próxima fase. Por enquanto eu sou um placeholder ' +
-      '— o esqueleto do chat está pronto, falta o backend.',
+    texto: resposta.texto,
     criadoEm: Date.now(),
+    fontes: resposta.fontes,
+    confianca: resposta.confianca,
   };
 }

@@ -1,7 +1,6 @@
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LogOut } from 'lucide-react-native';
-import { Pressable } from 'react-native';
 
 import { useAuth } from '@/store/auth';
 import { cores } from '@/theme';

@@ -24,12 +24,14 @@ import { paletas, temaAtual, type Tema } from '@/theme';
  * paleta em todas as telas.
  */
 export function Tela({ children }: { children: ReactNode }) {
-  const [tema, setTema] = useState<Tema>('dark');
+  // O tema é lido uma vez, já no estado inicial. Antes era um `useEffect` com
+  // `setTema`, que pintava um frame com a paleta errada a cada montagem — e o
+  // React agora avisa sobre setState síncrono dentro de efeito.
+  const [tema] = useState<Tema>(temaAtual);
   const web = Platform.OS === 'web';
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    setTema(temaAtual());
     const html = document.documentElement;
     // Garante a classe coerente no boot — pode estar faltando no SSR.
     if (!html.classList.contains('light') && !html.classList.contains('dark')) {

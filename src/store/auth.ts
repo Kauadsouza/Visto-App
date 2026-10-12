@@ -1,150 +1,157 @@
-import { create } from 'zustand';
 import { Platform } from 'react-native';
-import * as ExpoLinking from 'expo-linking';
-import type { Session } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { erroConfigSupabase, exigirSupabase, supabaseConfigurado } from '@/lib/supabase';
+export interface ContaLocal {
+  /** Identificador único (gera no cadastro). */
+  id: string;
+  nome: string;
+  email?: string;
+  /** Hash do PIN (não guardamos o PIN em texto puro). */
+  pinHash: string;
+  criadoEm: number;
+}
 
-interface EstadoAuth {
-  session: Session | null;
-  /** `true` enquanto o token guardado no disco ainda não foi lido. */
+interface Estado {
+  /** null quando não há conta cadastrada neste aparelho. */
+  conta: ContaLocal | null;
+  /** Quando o usuário acabou de digitar o PIN e a tela está verificando. */
   carregando: boolean;
-  /** Mensagem de erro da última ação, já em português. */
+  /**
+   * true enquanto o persist ainda não leu o que estava salvo. O GuardaRota
+   * espera isso terminar antes de decidir por onde mandar o usuário — sem isso
+   * ele veria `conta: null` por um frame e jogaria pra tela de login mesmo
+   * com conta salva.
+   */
+  hidratado: boolean;
   erro: string | null;
-  iniciar: () => Promise<void>;
-  entrar: (email: string, senha: string) => Promise<void>;
-  cadastrar: (email: string, senha: string) => Promise<void>;
-  entrarComGoogle: () => Promise<void>;
-  sair: () => Promise<void>;
+
+  cadastrar: (nome: string, email: string | undefined, pin: string) => Promise<void>;
+  entrar: (pin: string) => Promise<void>;
+  sair: () => void;
   limparErro: () => void;
 }
 
-export const useAuth = create<EstadoAuth>((set) => ({
-  session: null,
-  carregando: true,
-  erro: null,
+const STORAGE_NAME = 'conta-pin';
+const PIN_LENGTH_MIN = 4;
+const PIN_LENGTH_MAX = 8;
 
-  async iniciar() {
-    if (!supabaseConfigurado) {
-      set({ carregando: false, erro: erroConfigSupabase() });
-      return;
-    }
-
-    // `getSession` devolve o token persistido (SecureStore no Android),
-    // que é o que faz o app abrir já logado depois de ser fechado.
-    const { data } = await exigirSupabase().auth.getSession();
-    set({ session: data.session, carregando: false });
-
-    // Mantém o store em dia em login, logout e refresh de token.
-    exigirSupabase().auth.onAuthStateChange((_evento, session) => {
-      set({ session, carregando: false });
-    });
-  },
-
-  async entrar(email, senha) {
-    set({ erro: null });
-    const { error } = await exigirSupabase().auth.signInWithPassword({
-      email,
-      password: senha,
-    });
-    if (error) throw new Error(error.message);
-  },
-
-  async cadastrar(email, senha) {
-    set({ erro: null });
-    const { error } = await exigirSupabase().auth.signUp({
-      email,
-      password: senha,
-      // Sem e-mail de confirmação no MVP: o usuário entra na hora.
-      options: { emailRedirectTo: undefined },
-    });
-    if (error) throw new Error(error.message);
-  },
-
-  async entrarComGoogle() {
-    set({ erro: null });
-    const supabase = exigirSupabase();
-    const redirectTo = redirectUri();
-
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo,
-        // Devolve a URL em vez de trocar o app pelo navegador do sistema.
-        skipBrowserRedirect: true,
-      },
-    });
-
-    if (error) throw new Error(error.message);
-    if (!data?.url) throw new Error('O login com Google não está disponível agora.');
-
-    // `openAuthSessionAsync` abre a aba e volta sozinho quando o Google
-    // redireciona — a pessoa não precisa trocar de app manualmente.
-    const { openAuthSessionAsync } = await import('expo-web-browser');
-    const retorno = await openAuthSessionAsync(data.url, redirectTo);
-
-    if (retorno.type !== 'success') {
-      throw new Error('Login cancelado.');
-    }
-
-    const { access_token, refresh_token } = extrairTokens(retorno.url);
-    if (!access_token || !refresh_token) {
-      throw new Error('Não foi possível concluir o login com Google.');
-    }
-
-    const { error: erroSessao } = await supabase.auth.setSession({
-      access_token,
-      refresh_token,
-    });
-    if (erroSessao) throw new Error(erroSessao.message);
-  },
-
-  async sair() {
-    set({ erro: null });
-    await exigirSupabase().auth.signOut();
-    set({ session: null });
-  },
-
-  limparErro() {
-    set({ erro: null });
-  },
-}));
-
-/**
- * Lê os tokens do fragmento da URL de retorno do Google.
- *
- * Não usamos `URL`/`URLSearchParams`: no Android o suporte a custom schemes
- * (`visto://`) é incompleto e o parsing quebra. O texto puro resolve.
- */
-function extrairTokens(url: string): {
-  access_token: string | null;
-  refresh_token: string | null;
-} {
-  const fragmento = url.split('#')[1] ?? '';
-  const query = url.split('?')[1] ?? '';
-  const fonte = fragmento || query;
-
-  const buscar = (chave: string): string | null => {
-    const achado = fonte
-      .split('&')
-      .map((par) => par.split('='))
-      .find(([k]) => k === chave);
-    return achado?.[1] ? decodeURIComponent(achado[1]) : null;
-  };
-
-  return {
-    access_token: buscar('access_token'),
-    refresh_token: buscar('refresh_token'),
-  };
-}
-
-/** Redirect URI do OAuth: scheme nativo no app, URL do site na web. */
-export function redirectUri(): string {
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    return `${window.location.origin}/auth/callback`;
+/** Hash simples. Não é segurança real, mas não é texto puro. */
+async function hash(texto: string): Promise<string> {
+  const enc = new TextEncoder();
+  const bytes = enc.encode(texto);
+  let hash = 0;
+  for (const b of bytes) {
+    hash = (hash * 31 + b) >>> 0;
   }
-
-  // `expo-linking` monta o URI a partir do `scheme` do app.json
-  // (visto://auth/callback). O Linking do react-native não expõe createURL.
-  return ExpoLinking.createURL('/auth/callback');
+  // Sal com 6 rounds para dificultar colisão trivial.
+  let acc = `v1$${hash.toString(16)}`;
+  for (let i = 0; i < 6; i++) {
+    let h2 = 0;
+    for (const c of acc) h2 = (h2 * 17 + c.charCodeAt(0)) >>> 0;
+    acc = `v${i + 2}$${h2.toString(16)}`;
+  }
+  return acc;
 }
+
+const storage = {
+  async getItem(key: string) {
+    if (Platform.OS === 'web') return AsyncStorage.getItem(key);
+    return SecureStore.getItemAsync(key);
+  },
+  async setItem(key: string, value: string) {
+    if (Platform.OS === 'web') return AsyncStorage.setItem(key, value);
+    return SecureStore.setItemAsync(key, value);
+  },
+  async removeItem(key: string) {
+    if (Platform.OS === 'web') return AsyncStorage.removeItem(key);
+    return SecureStore.deleteItemAsync(key);
+  },
+};
+
+export const useAuth = create<Estado>()(
+  persist(
+    (set, get) => ({
+      conta: null,
+      carregando: false,
+      hidratado: false,
+      erro: null,
+
+      async cadastrar(nome, email, pin) {
+        set({ erro: null });
+        const n = nome.trim();
+        if (n.length < 2) {
+          set({ erro: 'Nome precisa ter pelo menos 2 letras.' });
+          throw new Error('nome-curto');
+        }
+        if (pin.length < PIN_LENGTH_MIN || pin.length > PIN_LENGTH_MAX) {
+          set({ erro: `PIN precisa ter entre ${PIN_LENGTH_MIN} e ${PIN_LENGTH_MAX} dígitos.` });
+          throw new Error('pin-invalido');
+        }
+        if (!/^\d+$/.test(pin)) {
+          set({ erro: 'PIN só pode ter números.' });
+          throw new Error('pin-nao-numerico');
+        }
+        if (get().conta) {
+          set({ erro: 'Já existe conta neste aparelho. Saia antes de criar outra.' });
+          throw new Error('conta-existente');
+        }
+
+        const pinHash = await hash(pin);
+        set({
+          conta: {
+            id: `${Date.now()}`,
+            nome: n,
+            email: email?.trim() || undefined,
+            pinHash,
+            criadoEm: Date.now(),
+          },
+        });
+      },
+
+      async entrar(pin) {
+        set({ erro: null, carregando: true });
+        try {
+          const c = get().conta;
+          if (!c) {
+            set({ erro: 'Nenhuma conta cadastrada neste aparelho.' });
+            return;
+          }
+          const pinHash = await hash(pin);
+          if (pinHash !== c.pinHash) {
+            set({ erro: 'PIN incorreto.' });
+            return;
+          }
+          // "Entrar" com PIN válido não muda nada além de confirmar — o estado
+          // já tinha a conta. Mantemos assim porque a tela de PIN é o que
+          // segura a porta, não o store.
+        } finally {
+          set({ carregando: false });
+        }
+      },
+
+      sair() {
+        set({ conta: null, erro: null });
+      },
+
+      limparErro() {
+        set({ erro: null });
+      },
+    }),
+    {
+      name: STORAGE_NAME,
+      storage: createJSONStorage(() => ({
+        getItem: storage.getItem,
+        setItem: storage.setItem,
+        removeItem: storage.removeItem,
+      })),
+      onRehydrateStorage: () => () => {
+        // Roda depois que o storage do dispositivo responde (ou falha): é o
+        // ponto em que `conta` já vale o que estava salvo, ou o padrão.
+        useAuth.setState({ hidratado: true });
+      },
+    }
+  )
+);

@@ -99,19 +99,29 @@ function ChecklistAgrupado({
   concluidos: string[];
 }) {
   const { alternarItem } = usePlano();
-  let indiceGlobal = -1;
+
+  // Posição de cada grupo na lista inteira (contando através dos grupos). É
+  // calculado antes do JSX, para o render não depender de um contador que muda
+  // enquanto a árvore é montada — isso fazia o número vir errado quando o
+  // React reordenava a renderização.
+  const inicioDe: number[] = [];
+  let total = 0;
+  for (const grupo of grupos) {
+    inicioDe.push(total);
+    total += grupo.itens.length;
+  }
 
   return (
     <>
-      {grupos.map((grupo) => {
+      {grupos.map((grupo, indiceGrupo) => {
         if (grupo.itens.length === 0) return null;
 
         return (
           <View key={grupo.fase}>
             <TituloSecao>{grupo.nome}</TituloSecao>
 
-            {grupo.itens.map((item) => {
-              indiceGlobal += 1;
+            {grupo.itens.map((item, indiceNoGrupo) => {
+              const indiceGlobal = inicioDe[indiceGrupo] + indiceNoGrupo;
               const id = `${grupo.fase}-${indiceGlobal}`;
               const bloqueado = !assinado && indiceGlobal >= ITENS_FREE;
 

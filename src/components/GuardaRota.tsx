@@ -37,33 +37,33 @@ const DESTINO = '/';
  * para que a decisão aconteça uma vez só.
  */
 export function GuardaRota({ children }: { children: React.ReactNode }) {
-  const { session, carregando } = useAuth();
+  const { conta, hidratado } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    if (carregando) return;
+    if (!hidratado) return;
 
     // A rota índice (a home) não tem nome: `segments[0]` vem indefinido.
     const atual = segments[0];
     const naHome = atual === undefined;
     const liberada = naHome || AREA_PUBLICA.includes(atual);
 
-    if (!session) {
-      // Sem sessão: só as rotas liberadas são acessíveis.
+    if (!conta) {
+      // Sem conta: só as rotas liberadas são acessíveis.
       if (!liberada) router.replace('/onboarding');
       return;
     }
 
-    // Com sessão: não faz sentido ver onboarding nem login de novo.
+    // Com conta: não faz sentido ver onboarding nem login de novo.
     if (SEM_LOGIN.includes(atual as (typeof SEM_LOGIN)[number])) {
       router.replace(DESTINO);
     }
-  }, [session, carregando, segments, router]);
+  }, [conta, hidratado, segments, router]);
 
-  // Enquanto o token do disco não foi lido, não decidimos nada — senão a tela
-  // protegida apareceria por um frame antes de redirecionar.
-  if (carregando) {
+  // Enquanto o storage do dispositivo não foi lido, não decidimos nada — senão
+  // a tela protegida apareceria por um frame antes de redirecionar.
+  if (!hidratado) {
     return (
       <View className="flex-1 items-center justify-center bg-fundo">
         <ActivityIndicator color={cores.verde} />

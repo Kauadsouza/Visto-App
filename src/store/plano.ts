@@ -29,8 +29,6 @@ interface Estado {
   cancelarAssinatura: () => void;
 }
 
-const hojeISO = () => new Date().toISOString().slice(0, 10);
-
 export const usePlano = create<Estado>()(
   persist(
     (set, get) => ({

@@ -3,19 +3,14 @@
  * Planos de consultoria
  * =============================================================
  *
- * Cada plano aqui é uma oferta paga. O texto é a cara do que se entrega
- * para a pessoa — sem prometer o que a consultoria não pode dar.
- *
- * O Visto **não** é assessoria jurídica. O texto dos planos reforça isso
- * em cada CTA. É o prompt original deixando a regra explícita.
- *
- * `custoEstimado` é o que entra na UI. A versão com fontes e verificação
- * é a mesma da TABELA_CUSTOS, mas aqui é mais simples: o preço é o
- * produto, não um item do checklist.
+ * Cada plano é uma oferta contratável. O texto é a cara do que se entrega,
+ * sem prometer o que a consultoria não pode dar. O Visto não é assessoria
+ * jurídica — os disclaimers reforçam isso em cada CTA.
  * =============================================================
  */
 
 export type CategoriaConsultor = 'diagnostico' | 'acompanhamento' | 'aplicacao';
+export type CicloConsultor = 'unico' | 'mensal';
 
 export interface PlanoConsultoria {
   slug: string;
@@ -23,11 +18,10 @@ export interface PlanoConsultoria {
   resumo: string;
   categoria: CategoriaConsultor;
   preco: number;
-  periodicidade: 'unico' | 'mensal';
+  periodicidade: CicloConsultor;
   duracao: string;
   entregaveis: string[];
   limitacoes: string[];
-  /** O que vem a mais por estar dentro do app: dados já preenchidos, etc. */
   bonus?: string[];
 }
 
@@ -73,7 +67,7 @@ export const PLANOS: PlanoConsultoria[] = [
       'O consultor não preenche formulários oficiais por você',
       'Não cobre honorários de advogado imigracionista (parceria à parte)',
     ],
-    bonus: ['Modelos de e-mail para consulado, universidade etc.'],
+    bonus: ['Modelos de e-mail para consulado, universidade e imigração'],
   },
   {
     slug: 'aplicacao-completa',
@@ -98,6 +92,10 @@ export const PLANOS: PlanoConsultoria[] = [
   },
 ];
 
-export function plano(slug: string): PlanoConsultoria | undefined {
+export function planoPorSlug(slug: string): PlanoConsultoria | undefined {
   return PLANOS.find((p) => p.slug === slug);
+}
+
+export function rotuloCategoria(c: CategoriaConsultor): string {
+  return { diagnostico: 'Diagnóstico', acompanhamento: 'Acompanhamento', aplicacao: 'Aplicação' }[c];
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -9,282 +9,257 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { TriangleAlert } from 'lucide-react-native';
+import { AlertTriangle, ArrowRight, Check, KeyRound, User } from 'lucide-react-native';
 
 import { Botao } from '@/components/Botao';
+import { Aviso, IconeQuadrado, Rotulo } from '@/components/ui';
 import { Tela } from '@/components/Tela';
-import { Aviso, Rotulo } from '@/components/ui';
-import { MODO_SEM_BACKEND } from '@/lib/config';
-import { mensagemDe } from '@/lib/erros';
-import { erroConfigSupabase } from '@/lib/supabase';
 import { useAuth } from '@/store/auth';
 import { cores } from '@/theme';
 
-type Modo = 'entrar' | 'cadastrar';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/** Input com rótulo flutuando acima, no mesmo peso do resto do sistema. */
-function Campo({
-  rotulo,
-  valor,
-  aoMudar,
-  placeholder,
-  seguro,
-  teclado,
-  capitalizar,
-  tipo,
-  aoEnviar,
-}: {
-  rotulo: string;
-  valor: string;
-  aoMudar: (v: string) => void;
-  placeholder: string;
-  seguro?: boolean;
-  teclado?: 'default' | 'email-address';
-  capitalizar?: 'none' | 'sentences';
-  tipo?: 'emailAddress' | 'password' | 'newPassword';
-  aoEnviar?: () => void;
-}) {
-  const [focado, setFocado] = useState(false);
-  const borda = focado ? cores.bordaVerde : cores.borda;
-
-  return (
-    <View className="mt-5">
-      <Rotulo>{rotulo}</Rotulo>
-      <TextInput
-        value={valor}
-        onChangeText={aoMudar}
-        onFocus={() => setFocado(true)}
-        onBlur={() => setFocado(false)}
-        placeholder={placeholder}
-        placeholderTextColor={cores.texto4}
-        secureTextEntry={seguro}
-        keyboardType={teclado ?? 'default'}
-        autoCapitalize={capitalizar ?? 'sentences'}
-        autoCorrect={false}
-        textContentType={tipo}
-        returnKeyType="go"
-        onSubmitEditing={aoEnviar}
-        className="mt-2 h-14 rounded-xl border bg-superficie px-4 text-base"
-        style={{ borderColor: borda, color: cores.texto }}
-      />
-    </View>
-  );
-}
+type Modo = 'cadastrar' | 'entrar';
 
 export default function Auth() {
   const router = useRouter();
-  const { session, erro, entrar, cadastrar, entrarComGoogle, limparErro } = useAuth();
+  const { conta, cadastrar, entrar, sair, erro, limparErro, carregando } = useAuth();
 
   const [modo, setModo] = useState<Modo>('entrar');
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [enviando, setEnviando] = useState(false);
-  const [googleCarregando, setGoogleCarregando] = useState(false);
-  const [erroLocal, setErroLocal] = useState<string | null>(null);
+  const [pin, setPin] = useState('');
+  const [pinRepetido, setPinRepetido] = useState('');
 
-  const configFalta = erroConfigSupabase();
-  const erroExibido = erroLocal ?? erro ?? configFalta;
-  const ocupado = enviando || googleCarregando;
-
-  useEffect(() => {
-    if (session) router.replace('/');
-  }, [session, router]);
+  const ocupado = carregando;
+  const erroExibido = erro;
 
   function trocarModo(novo: Modo) {
     setModo(novo);
-    setErroLocal(null);
+    setPin('');
+    setPinRepetido('');
     limparErro();
   }
 
-  /** Email válido mas sem cadastro é o caso mais comum: oferece criar conta. */
-  const podeSugerirCadastro = Boolean(
-    erro && /não tem conta|não possui conta|not found/i.test(erro)
-  );
-
   async function enviar() {
-    const emailLimpo = email.trim().toLowerCase();
-
-    if (!emailLimpo) return setErroLocal('Digite seu email.');
-    if (!EMAIL_RE.test(emailLimpo)) return setErroLocal('Esse email não parece válido.');
-    if (senha.length < 6)
-      return setErroLocal('A senha precisa ter pelo menos 6 caracteres.');
-
-    setErroLocal(null);
-    setEnviando(true);
-
-    try {
-      if (modo === 'entrar') await entrar(emailLimpo, senha);
-      else await cadastrar(emailLimpo, senha);
-      router.replace('/');
-    } catch (e) {
-      setErroLocal(mensagemDe(e));
-    } finally {
-      setEnviando(false);
-    }
-  }
-
-  async function comGoogle() {
-    setErroLocal(null);
-    setGoogleCarregando(true);
-    try {
-      await entrarComGoogle();
-      router.replace('/');
-    } catch (e) {
-      setErroLocal(mensagemDe(e));
-    } finally {
-      setGoogleCarregando(false);
+    if (modo === 'cadastrar') {
+      if (pin !== pinRepetido) {
+        limparErro();
+        // erro do store é resetado pelo limparErro; usamos um estado local
+        // pequeno via setTimeout? Não: o store guarda a última string.
+        // Solução mais simples: criar uma key separada para o erro de
+        // PIN local, mas para evitar mais um campo, lançamos a partir do
+        // setter via setTimeout.
+        setTimeout(() => useAuth.setState({ erro: 'Os dois PINs não batem.' }), 0);
+        return;
+      }
+      try {
+        await cadastrar(nome, email || undefined, pin);
+        router.replace('/');
+      } catch {
+        /* erro já está no store */
+      }
+    } else {
+      await entrar(pin);
+      if (!useAuth.getState().erro) {
+        router.replace('/');
+      }
     }
   }
 
   return (
-    <Tela>
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1"
       keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
     >
-      <ScrollView
-        className="flex-1"
-        // flexGrow deixa o conteúdo ocupar a altura toda; sem isso o rodapé
-        // fica colado no formulário e sobra um vazio enorme embaixo.
-        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 28 }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Rotulo cor={cores.verde}>{modo === 'entrar' ? 'voltar ao plano' : 'começar'}</Rotulo>
-
-        <Text className="mt-3 text-3xl font-bold" style={{ color: cores.texto }}>
-          {modo === 'entrar' ? 'Entre na sua conta' : 'Crie sua conta'}
-        </Text>
-        <Text className="mt-3 text-base leading-7" style={{ color: cores.texto2 }}>
-          {modo === 'entrar'
-            ? 'Continue de onde você parou.'
-            : 'Leva menos de um minuto. Só email e senha.'}
-        </Text>
-
-        <Campo
-          rotulo="email"
-          valor={email}
-          aoMudar={(v) => {
-            setEmail(v);
-            if (erroLocal) setErroLocal(null);
-          }}
-          placeholder="voce@email.com"
-          teclado="email-address"
-          capitalizar="none"
-          tipo="emailAddress"
-          aoEnviar={enviar}
-        />
-
-        <Campo
-          rotulo="senha"
-          valor={senha}
-          aoMudar={(v) => {
-            setSenha(v);
-            if (erroLocal) setErroLocal(null);
-          }}
-          placeholder="mínimo 6 caracteres"
-          seguro
-          capitalizar="none"
-          tipo={modo === 'entrar' ? 'password' : 'newPassword'}
-          aoEnviar={enviar}
-        />
-
-        {erroExibido ? (
-          <View className="mt-6">
-            <Aviso texto={erroExibido} tom="erro" Icone={TriangleAlert} />
-          </View>
-        ) : null}
-
-        <Botao
-          titulo={modo === 'entrar' ? 'Entrar' : 'Criar conta'}
-          onPress={enviar}
-          carregando={enviando}
-          disabled={ocupado || Boolean(configFalta)}
-          className="mt-8"
-        />
-
-        {/* Só aparece quando o email é válido e não tem conta — é a ação útil. */}
-        {podeSugerirCadastro && modo === 'entrar' ? (
-          <Pressable onPress={() => trocarModo('cadastrar')} className="mt-4 items-center py-2">
-            <Text className="text-sm font-semibold" style={{ color: cores.verde }}>
-              Criar conta com esse email
-            </Text>
-          </Pressable>
-        ) : null}
-
-        <View className="mb-8 mt-7 flex-row items-center">
-          <View className="h-px flex-1" style={{ backgroundColor: cores.borda }} />
-          <Text className="mx-4 text-caption uppercase" style={{ color: cores.texto4 }}>
-            ou
-          </Text>
-          <View className="h-px flex-1" style={{ backgroundColor: cores.borda }} />
-        </View>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Entrar com Google"
-          onPress={comGoogle}
-          disabled={ocupado || Boolean(configFalta)}
-          className="h-14 w-full flex-row items-center justify-center gap-3 rounded-xl border active:opacity-80"
-          style={{ backgroundColor: cores.superficie, borderColor: cores.borda }}
+      <Tela>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 36 }}
+          keyboardShouldPersistTaps="handled"
         >
-          <View
-            className="h-6 w-6 items-center justify-center rounded-full"
-            style={{ backgroundColor: cores.texto }}
-          >
-            <Text className="text-sm font-bold" style={{ color: cores.fundo }}>
-              G
-            </Text>
+          <View className="items-center">
+            <IconeQuadrado Icone={KeyRound} cor={cores.verde} tamanho={64} />
           </View>
-          <Text className="text-base font-medium" style={{ color: cores.texto }}>
-            {googleCarregando ? 'Abrindo o Google…' : 'Entrar com Google'}
+
+          <Rotulo className="mt-6 text-center">{modo === 'entrar' ? 'entrar' : 'criar conta'}</Rotulo>
+          <Text className="mt-2 text-center text-2xl font-bold" style={{ color: cores.texto }}>
+            {modo === 'entrar' ? 'Digite o seu PIN' : 'Crie o seu PIN'}
           </Text>
-        </Pressable>
+          <Text className="mt-2 text-center text-sm leading-6" style={{ color: cores.texto2 }}>
+            {modo === 'entrar'
+              ? 'É um número de 4 a 8 dígitos que você escolheu no cadastro.'
+              : 'Escolha 4 a 8 números. A gente não usa email nem servidor — é tudo no seu aparelho.'}
+          </Text>
 
-        {/* Empurra o rodapé para o fim da tela. */}
-        <View className="flex-1 min-h-8" />
+          {modo === 'cadastrar' ? (
+            <View className="mt-8">
+              <Campo
+                icone={User}
+                rotulo="nome"
+                valor={nome}
+                aoMudar={setNome}
+                placeholder="Como você quer ser chamado"
+                capitalizar="words"
+                autoCorrect={false}
+              />
+              <Campo
+                icone={User}
+                rotulo="email (opcional)"
+                valor={email}
+                aoMudar={setEmail}
+                placeholder="seu@email.com"
+                tipo="emailAddress"
+                capitalizar="none"
+                autoCorrect={false}
+              />
+            </View>
+          ) : null}
 
-        {MODO_SEM_BACKEND ? (
-          <View>
+          <View className="mt-4">
+            <Campo
+              icone={KeyRound}
+              rotulo={modo === 'entrar' ? 'pin' : 'novo pin'}
+              valor={pin}
+              aoMudar={(t) => {
+                setPin(t.replace(/\D/g, '').slice(0, 8));
+                if (erro) limparErro();
+              }}
+              placeholder="4 a 8 números"
+              seguro
+              keyboard="number-pad"
+              maxLength={8}
+            />
+            {modo === 'cadastrar' ? (
+              <Campo
+                icone={KeyRound}
+                rotulo="repita o pin"
+                valor={pinRepetido}
+                aoMudar={(t) => {
+                  setPinRepetido(t.replace(/\D/g, '').slice(0, 8));
+                  if (erro) limparErro();
+                }}
+                placeholder="o mesmo de novo"
+                seguro
+                keyboard="number-pad"
+                maxLength={8}
+              />
+            ) : null}
+          </View>
+
+          {erroExibido ? (
+            <View className="mt-4">
+              <Aviso texto={erroExibido} tom="erro" Icone={AlertTriangle} />
+            </View>
+          ) : null}
+
+          <Botao
+            titulo={modo === 'entrar' ? 'Entrar' : 'Criar conta'}
+            onPress={enviar}
+            carregando={ocupado}
+            disabled={pin.length < 4 || (modo === 'cadastrar' && nome.trim().length < 2)}
+            className="mt-8"
+          />
+
+          {conta && modo === 'entrar' ? (
             <Pressable
-              onPress={() => router.replace('/')}
-              disabled={ocupado}
-              className="items-center rounded-xl border py-4 active:opacity-80"
-              style={{ backgroundColor: cores.fundo2, borderColor: cores.borda }}
+              onPress={() => {
+                sair();
+              }}
+              className="mt-3 items-center py-3"
             >
-              <Text className="text-sm font-semibold" style={{ color: cores.texto2 }}>
-                Continuar sem conta
+              <Text className="text-caption" style={{ color: cores.texto3 }}>
+                Sair e trocar de conta
               </Text>
             </Pressable>
+          ) : null}
 
-            <Text
-              className="mt-4 text-center text-caption leading-5"
-              style={{ color: cores.texto4 }}
-            >
-              Modo de desenvolvimento: sem Supabase o app funciona só com estado
-              local e nada é salvo na nuvem.
+          <View className="mt-8 flex-row items-center">
+            <View className="h-px flex-1" style={{ backgroundColor: cores.borda }} />
+            <Text className="mx-4 text-caption uppercase" style={{ color: cores.texto4 }}>
+              ou
             </Text>
+            <View className="h-px flex-1" style={{ backgroundColor: cores.borda }} />
           </View>
-        ) : null}
 
-        <View className="mt-10 flex-row items-center justify-center">
-          <Text className="text-sm" style={{ color: cores.texto3 }}>
-            {modo === 'entrar' ? 'Ainda não tem conta?' : 'Já tem conta?'}
-          </Text>
           <Pressable
             onPress={() => trocarModo(modo === 'entrar' ? 'cadastrar' : 'entrar')}
-            style={{ marginLeft: 6 }}
+            className="mt-4 items-center py-2"
           >
             <Text className="text-sm font-semibold" style={{ color: cores.verde }}>
-              {modo === 'entrar' ? 'Criar conta' : 'Entrar'}
+              {modo === 'entrar' ? 'Criar conta nova' : 'Já tenho PIN — entrar'}
+              <ArrowRight size={14} color={cores.verde} className="ml-1" />
             </Text>
           </Pressable>
-        </View>
-        <View style={{ height: 28 }} />
-      </ScrollView>
+
+          <View className="mt-6 flex-row items-center rounded-xl border p-3" style={{ backgroundColor: cores.superficie, borderColor: cores.borda }}>
+            <Check size={15} color={cores.verde} />
+            <Text className="ml-3 flex-1 text-caption leading-4" style={{ color: cores.texto3 }}>
+              {conta
+                ? `Conectado como ${conta.nome}. Tudo fica no seu aparelho.`
+                : 'Sem servidor. Sem cadastro em site. Sem email para confirmar. O PIN é a única porta.'}
+            </Text>
+          </View>
+
+          <View style={{ height: 32 }} />
+        </ScrollView>
+      </Tela>
     </KeyboardAvoidingView>
-    </Tela>
+  );
+}
+
+function Campo({
+  icone: Icone,
+  rotulo,
+  valor,
+  aoMudar,
+  placeholder,
+  seguro,
+  tipo,
+  capitalizar,
+  autoCorrect,
+  keyboard,
+  maxLength,
+}: {
+  icone: typeof User;
+  rotulo: string;
+  valor: string;
+  aoMudar: (v: string) => void;
+  placeholder: string;
+  seguro?: boolean;
+  tipo?: 'emailAddress';
+  capitalizar?: 'none' | 'words' | 'sentences';
+  autoCorrect?: boolean;
+  keyboard?: 'default' | 'email-address' | 'number-pad';
+  maxLength?: number;
+}) {
+  const [focado, setFocado] = useState(false);
+  const borda = focado ? cores.bordaVerde : cores.borda;
+
+  return (
+    <View className="mb-3">
+      <Rotulo>{rotulo}</Rotulo>
+      <View
+        className="mt-2 flex-row items-center rounded-xl border bg-superficie px-3"
+        style={{ borderColor: borda, height: 56 }}
+      >
+        <Icone size={16} color={cores.texto3} />
+        <TextInput
+          value={valor}
+          onChangeText={aoMudar}
+          onFocus={() => setFocado(true)}
+          onBlur={() => setFocado(false)}
+          placeholder={placeholder}
+          placeholderTextColor={cores.texto4}
+          secureTextEntry={seguro}
+          keyboardType={keyboard}
+          textContentType={tipo}
+          autoCapitalize={capitalizar}
+          autoCorrect={autoCorrect}
+          maxLength={maxLength}
+          className="flex-1 px-3 text-base"
+          style={{ color: cores.texto }}
+        />
+      </View>
+    </View>
   );
 }

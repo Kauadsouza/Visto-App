@@ -32,6 +32,8 @@
     "@types/node": "^26.6.4",
     "@types/react": "~19.2.2",
     "babel-preset-expo": "^57.0.13",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~57.0.2",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -41,7 +43,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"src/lib/*.test.ts\"",
-    "doctor": "expo-doctor"
+    "doctor": "expo-doctor",
+    "lint": "expo lint"
   },
   "private": true
 }
