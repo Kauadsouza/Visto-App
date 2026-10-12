@@ -78,7 +78,7 @@ export default function Auth() {
           keyboardShouldPersistTaps="handled"
         >
           <View className="items-center">
-            <IconeQuadrado Icone={KeyRound} cor={cores.verde} tamanho={64} />
+            <IconeQuadrado Icone={KeyRound} cor={cores.marinho} tamanho={64} />
           </View>
 
           <Rotulo className="mt-6 text-center">{modo === 'entrar' ? 'entrar' : 'criar conta'}</Rotulo>
@@ -185,14 +185,14 @@ export default function Auth() {
             onPress={() => trocarModo(modo === 'entrar' ? 'cadastrar' : 'entrar')}
             className="mt-4 items-center py-2"
           >
-            <Text className="text-sm font-semibold" style={{ color: cores.verde }}>
+            <Text className="text-sm font-semibold" style={{ color: cores.marinho }}>
               {modo === 'entrar' ? 'Criar conta nova' : 'Já tenho PIN — entrar'}
-              <ArrowRight size={14} color={cores.verde} className="ml-1" />
+              <ArrowRight size={14} color={cores.marinho} className="ml-1" />
             </Text>
           </Pressable>
 
           <View className="mt-6 flex-row items-center rounded-xl border p-3" style={{ backgroundColor: cores.superficie, borderColor: cores.borda }}>
-            <Check size={15} color={cores.verde} />
+            <Check size={15} color={cores.marinho} />
             <Text className="ml-3 flex-1 text-caption leading-4" style={{ color: cores.texto3 }}>
               {conta
                 ? `Conectado como ${conta.nome}. Tudo fica no seu aparelho.`
@@ -233,7 +233,7 @@ function Campo({
   maxLength?: number;
 }) {
   const [focado, setFocado] = useState(false);
-  const borda = focado ? cores.bordaVerde : cores.borda;
+  const borda = focado ? cores.bordaMarca : cores.borda;
 
   return (
     <View className="mb-3">

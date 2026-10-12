@@ -9,16 +9,24 @@ module.exports = {
 
   theme: {
     fontSize: {
-      'label': ['11px', { lineHeight: '14px', letterSpacing: '1.4px' }],
+      'label': ['11px', { lineHeight: '14px', letterSpacing: '1.5px' }],
       'caption': ['12px', { lineHeight: '17px' }],
       'sm': ['14px', { lineHeight: '21px' }],
       'base': ['16px', { lineHeight: '24px' }],
       'lg': ['18px', { lineHeight: '27px' }],
-      'xl': ['20px', { lineHeight: '28px' }],
-      '2xl': ['24px', { lineHeight: '31px' }],
-      '3xl': ['30px', { lineHeight: '37px' }],
-      '4xl': ['36px', { lineHeight: '43px' }],
-      '5xl': ['44px', { lineHeight: '52px' }],
+      'xl': ['20px', { lineHeight: '29px', letterSpacing: '-0.1px' }],
+      '2xl': ['24px', { lineHeight: '31px', letterSpacing: '-0.2px' }],
+      '3xl': ['30px', { lineHeight: '36px', letterSpacing: '-0.4px' }],
+      '4xl': ['36px', { lineHeight: '42px', letterSpacing: '-0.6px' }],
+      '5xl': ['44px', { lineHeight: '50px', letterSpacing: '-0.8px' }],
+    },
+
+    // A marca é editorial: serif nos títulos, sem serifa no corpo e na UI.
+    // Georgia existe no Windows e no macOS; no Android o serif do sistema
+    // (Noto Serif) segura o mesmo papel.
+    fontFamily: {
+      serif: ['Georgia', 'serif'],
+      sans: ['System', '-apple-system', 'Roboto', 'sans-serif'],
     },
 
     borderRadius: {
@@ -35,54 +43,62 @@ module.exports = {
       colors: {
         // ----- Brand -----
         brand: {
-          DEFAULT: '#22C55E',
-          50: '#F0FDF4',
-          100: '#DCFCE7',
-          200: '#BBF7D0',
-          300: '#86EFAC',
-          400: '#4ADE80',
-          500: '#22C55E',
-          600: '#16A34A',
-          700: '#15803D',
-          800: '#166534',
-          900: '#14532D',
+          DEFAULT: '#1B3A6B',
+          50: '#F2F5FA',
+          100: '#E3EAF4',
+          200: '#C4D3E8',
+          300: '#9DB6D6',
+          400: '#6D92BE',
+          500: '#4771A6',
+          600: '#2F5A9E',
+          700: '#1B3A6B',
+          800: '#16305A',
+          900: '#12294D',
         },
 
-        // ----- Modo DARK (padrão) -----
-        // Tem matiz de marca no fundo, não preto puro — mais vivo.
-        fundo: '#0B0F0C',
-        'fundo-2': '#101511',
-        superficie: '#161B17',
-        'superficie-2': '#1E2420',
-        'superficie-3': '#272E29',
-        borda: '#252A26',
-        'borda-forte': '#3A4039',
-        'borda-verde': '#1F7A3C',
+        // Dourado: selo de consultoria humana e valores. Uso raro de propósito.
+        ouro: {
+          DEFAULT: '#C9A227',
+          100: '#F7EFD6',
+          300: '#E3C767',
+          700: '#8A6E14',
+        },
 
-        texto: '#FFFFFF',
-        'texto-2': '#D6DAD3',
-        'texto-3': '#9CA39D',
-        'texto-4': '#6F7671',
+        // ----- Modo LIGHT (padrão) -----
+        // Papel quente, tinta quente, hairlines quentes.
+        fundo: '#FBFAF8',
+        'fundo-2': '#F5F2EC',
+        superficie: '#FFFFFF',
+        'superficie-2': '#F2EFE9',
+        'superficie-3': '#E8E3D9',
+        borda: '#E5E0D6',
+        'borda-forte': '#CFC7B8',
+        'borda-marca': '#B9C6DC',
 
-        // ----- Modo LIGHT (off-white quente) -----
-        // Aplicado quando a classe `light` está na raiz.
-        'fundo-claro': '#FAF8F4',
-        'fundo-2-claro': '#F4F0E8',
-        'superficie-claro': '#FFFFFF',
-        'superficie-2-claro': '#F2EDE3',
-        'superficie-3-claro': '#E8E1D2',
-        'borda-claro': '#E2DAC7',
-        'borda-forte-claro': '#C9C0A8',
-        'borda-verde-claro': '#A8D4B0',
-        'texto-claro': '#0F1311',
-        'texto-2-claro': '#3F4541',
-        'texto-3-claro': '#6A706B',
-        'texto-4-claro': '#909999',
+        texto: '#16130F',
+        'texto-2': '#4A453D',
+        'texto-3': '#7A746A',
+        'texto-4': '#A8A196',
 
-        atencao: '#F5A524',
-        erro: '#EF4444',
-        info: '#3B82F6',
-        sucesso: '#16A34A',
+        // ----- Modo DARK (noturno) -----
+        'fundo-escuro': '#141210',
+        'fundo-2-escuro': '#1C1A16',
+        'superficie-escuro': '#232019',
+        'superficie-2-escuro': '#2C2822',
+        'superficie-3-escuro': '#38332B',
+        'borda-escuro': '#35302A',
+        'borda-forte-escuro': '#4C463C',
+        'borda-marca-escuro': '#3E5578',
+
+        'texto-escuro': '#F7F4EE',
+        'texto-2-escuro': '#D3CCC0',
+        'texto-3-escuro': '#9C9488',
+        'texto-4-escuro': '#6E675E',
+
+        atencao: '#B45309',
+        erro: '#B3261E',
+        info: '#1D4ED8',
+        sucesso: '#15803D',
       },
 
       spacing: {
@@ -90,21 +106,17 @@ module.exports = {
         22: '88px',
       },
 
-      // Sombras muito sutis — em fundo escuro sombra não aparece. Use só
-      // para o modo claro, se a peça tiver elevação sobre um fundo claro.
+      // Sombra existe de verdade em papel claro — é o que dá a sensação de
+      // folha de papel sobre a mesa. Difícil e pequena.
       boxShadow: {
-        'soft': '0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04)',
-        'lift': '0 4px 12px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.04)',
+        'soft': '0 1px 2px rgba(22, 19, 15, 0.04), 0 2px 8px rgba(22, 19, 15, 0.04)',
+        'lift': '0 2px 4px rgba(22, 19, 15, 0.04), 0 8px 24px rgba(22, 19, 15, 0.06)',
+        'papel': '0 1px 3px rgba(22, 19, 15, 0.05), 0 12px 32px rgba(22, 19, 15, 0.07)',
       },
 
-      // A vida no app: dois backgrounds com matiz de marca diferentes
       backgroundImage: {
-        'gradient-verde': ['linear-gradient(135deg, #22C55E 0%, #16A34A 100%)'],
-        'gradient-glow': [
-          'radial-gradient(ellipse at top, rgba(34, 197, 94, 0.12) 0%, transparent 60%)',
-        ],
-        'grain':
-          "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E\")",
+        'gradiente-marca': ['linear-gradient(135deg, #1B3A6B 0%, #12294D 100%)'],
+        'gradiente-ouro': ['linear-gradient(135deg, #C9A227 0%, #8A6E14 100%)'],
       },
     },
   },

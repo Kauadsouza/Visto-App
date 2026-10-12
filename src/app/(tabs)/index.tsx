@@ -1,16 +1,24 @@
 import { useMemo } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { Aviso, Barra, Card, Rotulo } from '@/components/ui';
+import { Aviso, Barra, Card, Etiqueta, LinhaNavegacao, Rotulo } from '@/components/ui';
 import { Tela } from '@/components/Tela';
 import { diagnosticar } from '@/lib/diagnostico';
 import { calcularContador, emAnos } from '@/lib/permissoes';
-import { itensDaRota } from '@/lib/planos';
+import { contarConcluidos, itensDaRota } from '@/lib/planos';
 import { corViabilidade, cores, rotuloViabilidade } from '@/theme';
 import { usePlano } from '@/store/plano';
 import { useQuestionario } from '@/store/questionario';
-import { Check, ChevronRight, Compass } from 'lucide-react-native';
+import {
+  ArrowRight,
+  Check,
+  ChevronRight,
+  Compass,
+  CreditCard,
+  Map,
+  RefreshCw,
+} from 'lucide-react-native';
 
 import { Botao } from '@/components/Botao';
 
@@ -43,9 +51,7 @@ export default function Inicio() {
   );
   const contador = useMemo(() => calcularContador(viagens), [viagens]);
 
-  const feitos = itens.filter((i, idx) =>
-    concluidos.includes(`${i.fase}-${idx}`)
-  ).length;
+  const feitos = useMemo(() => contarConcluidos(itens, concluidos), [itens, concluidos]);
   const percentual = itens.length ? (feitos / itens.length) * 100 : 0;
 
   const hora = new Date().getHours();
@@ -55,55 +61,51 @@ export default function Inicio() {
   if (!principal) {
     return (
       <Tela>
-        <View className="flex-1">
-          {/* Glow verde de marca no topo — dá vida sem virar startup genérico */}
-          <View
-            className="absolute left-0 right-0 top-0 h-72"
-            style={{ backgroundColor: `${cores.verde}10` }}
-          />
-          <ScrollView
-            className="flex-1"
-            contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 28 }}
-          >
-            <View className="flex-row items-center gap-3">
-              <View
-                className="h-12 w-12 items-center justify-center rounded-2xl border"
-                style={{
-                  backgroundColor: cores.verde,
-                  borderColor: cores.verdeEscuro,
-                  shadowColor: cores.verde,
-                  shadowOpacity: 0.5,
-                  shadowRadius: 12,
-                  elevation: 6,
-                }}
-              >
-                <Compass size={24} color="#FFFFFF" />
-              </View>
-              <View>
-                <Rotulo cor={cores.verde}>visto</Rotulo>
-                <Text className="text-caption mt-0.5" style={{ color: cores.texto3 }}>
-                  imigração do Brasil para o mundo
-                </Text>
-              </View>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 28, paddingTop: 40 }}
+        >
+          <View className="flex-row items-center gap-3">
+            <View
+              className="h-11 w-11 items-center justify-center rounded-xl"
+              style={{ backgroundColor: cores.marinho }}
+            >
+              <Compass size={22} color="#FFFFFF" />
             </View>
+            <View>
+              <Text
+                className="font-serif text-xl font-bold"
+                style={{ color: cores.texto }}
+              >
+                Visto
+              </Text>
+              <Text className="text-caption" style={{ color: cores.texto3 }}>
+                imigração do Brasil para o mundo
+              </Text>
+            </View>
+          </View>
 
-          <View className="mt-10 flex-1 justify-center">
-            <Text className="text-4xl font-bold" style={{ color: cores.texto }}>
+          <View className="mt-14 flex-1">
+            <Rotulo cor={cores.marinho}>seu visto, sem chute</Rotulo>
+            <Text
+              className="mt-4 font-serif text-5xl font-bold"
+              style={{ color: cores.texto }}
+            >
               Sair do Brasil{'\n'}é um processo.
             </Text>
-            <Text className="mt-4 text-base leading-7" style={{ color: cores.texto2 }}>
-              A gente mostra o caminho na ordem — custo, prazo e o que fazer
-              primeiro.
+            <Text className="mt-5 text-lg leading-8" style={{ color: cores.texto2 }}>
+              Três rotas que existem de verdade, com custo, prazo e a ordem dos
+              passos — não uma lista genérica de países.
             </Text>
 
-            <View className="mt-8">
+            <View className="mt-10">
               {MOTIVOS.map((m) => (
-                <View key={m.titulo} className="mb-4 flex-row">
+                <View key={m.titulo} className="mb-5 flex-row">
                   <View
                     className="mt-0.5 h-6 w-6 items-center justify-center rounded-full"
-                    style={{ backgroundColor: `${cores.verde}1F` }}
+                    style={{ backgroundColor: `${cores.marinho}14` }}
                   >
-                    <Check size={13} color={cores.verde} />
+                    <Check size={13} color={cores.marinho} />
                   </View>
                   <View className="ml-3 flex-1">
                     <Text className="text-base font-semibold" style={{ color: cores.texto }}>
@@ -118,9 +120,10 @@ export default function Inicio() {
             </View>
           </View>
 
-          <View className="pb-6">
+          <View className="pb-8">
             <Botao
               titulo="Começar o questionário"
+              iconeFim={ArrowRight}
               onPress={() => router.push('/questionario')}
             />
             <Text
@@ -131,7 +134,6 @@ export default function Inicio() {
             </Text>
           </View>
         </ScrollView>
-        </View>
       </Tela>
     );
   }
@@ -140,97 +142,74 @@ export default function Inicio() {
 
   return (
     <Tela>
-      {/* Glow de marca no topo, atrás de tudo */}
-      <View
-        className="absolute left-0 right-0 top-0 h-80"
-        style={{ backgroundColor: `${cores.verde}0F` }}
-      />
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 32, paddingBottom: 40 }}
       >
         <View className="flex-row items-end justify-between">
           <View>
-            <Rotulo cor={cores.verde}>{saudacao.toLowerCase()}</Rotulo>
-            <Text className="mt-1 text-2xl font-bold" style={{ color: cores.texto }}>
+            <Rotulo cor={cores.marinho}>{saudacao.toLowerCase()}</Rotulo>
+            <Text
+              className="mt-2 font-serif text-4xl font-bold"
+              style={{ color: cores.texto }}
+            >
               Seu caminho
             </Text>
           </View>
         </View>
 
         {/* Rota principal: o número mais importante do app */}
-        <View
-          className="mt-6 overflow-hidden rounded-2xl border"
-          style={{
-            backgroundColor: cores.superficie2,
-            borderColor: cores.bordaVerde,
-            shadowColor: cores.verde,
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.25,
-            shadowRadius: 24,
-            elevation: 8,
-          }}
-        >
-          {/* Faixa verde sutil no topo do card — ecoa o brand sem virar genérico */}
-          <View className="h-1" style={{ backgroundColor: cores.verde }} />
+        <Card nivel={1} elevado className="mt-6 p-6">
+          <Rotulo>rota recomendada</Rotulo>
 
-          <View className="p-6">
-            <Rotulo>rota recomendada</Rotulo>
+          <Text
+            className="mt-3 font-serif text-2xl font-bold"
+            style={{ color: cores.texto }}
+          >
+            {principal.nome}
+          </Text>
 
-            <Text className="mt-3 text-2xl font-bold" style={{ color: cores.texto }}>
-              {principal.nome}
+          <View className="mt-3 flex-row items-center gap-2">
+            <Etiqueta texto={rotuloViabilidade[principal.viabilidade]} cor={cor} />
+            <Text className="text-caption" style={{ color: cores.texto3 }}>
+              {`${principal.tempoMeses[0]}–${principal.tempoMeses[1]} meses`}
             </Text>
-
-            <View className="mt-3 flex-row items-center gap-2">
-              <View
-                className="rounded-full px-3 py-1"
-                style={{ backgroundColor: `${cor}1F` }}
-              >
-                <Text className="text-caption font-semibold" style={{ color: cor }}>
-                  {rotuloViabilidade[principal.viabilidade]}
-                </Text>
-              </View>
-              <Text className="text-caption" style={{ color: cores.texto3 }}>
-                {`${principal.tempoMeses[0]}–${principal.tempoMeses[1]} meses`}
-              </Text>
-            </View>
-
-            <Text className="mt-4 text-sm leading-6" style={{ color: cores.texto2 }}>
-              {principal.resumo}
-            </Text>
-
-            <View className="mt-6">
-              <View className="flex-row items-baseline justify-between">
-                <Text className="text-caption font-semibold" style={{ color: cores.texto2 }}>
-                  {`${feitos} de ${itens.length} passos`}
-                </Text>
-                <Text className="text-caption" style={{ color: cores.texto3 }}>
-                  {`${Math.round(percentual)}%`}
-                </Text>
-              </View>
-              <View className="mt-2">
-                <Barra valor={percentual} altura={6} />
-              </View>
-            </View>
-
-            <Pressable
-              onPress={() => router.push({ pathname: '/plano', params: { rota: principal.slug } })}
-              className="mt-6 flex-row items-center justify-center rounded-xl border py-4 active:opacity-80"
-              style={{ backgroundColor: cores.verde, borderColor: cores.verdeEscuro }}
-            >
-              <Text className="font-semibold" style={{ color: '#FFFFFF' }}>
-                Continuar meu plano
-              </Text>
-              <ChevronRight size={17} color="#FFFFFF" className="ml-1" />
-            </Pressable>
           </View>
-        </View>
+
+          <Text className="mt-4 text-base leading-7" style={{ color: cores.texto2 }}>
+            {principal.resumo}
+          </Text>
+
+          <View className="mt-6">
+            <View className="flex-row items-baseline justify-between">
+              <Text className="text-caption font-semibold" style={{ color: cores.texto2 }}>
+                {`${feitos} de ${itens.length} passos`}
+              </Text>
+              <Text className="text-caption" style={{ color: cores.texto3 }}>
+                {`${Math.round(percentual)}%`}
+              </Text>
+            </View>
+            <View className="mt-2">
+              <Barra valor={percentual} altura={6} />
+            </View>
+          </View>
+
+          <Botao
+            titulo="Continuar meu plano"
+            iconeFim={ChevronRight}
+            onPress={() => router.push({ pathname: '/plano', params: { rota: principal.slug } })}
+            className="mt-6"
+          />
+        </Card>
 
         {/* Duas coisas que a pessoa quer saber sem abrir outra tela */}
-        <View className="mt-4 flex-row gap-3">
+        <View className="mt-3 flex-row gap-3">
           <Card nivel={1} className="flex-1 p-4">
             <Rotulo>no país</Rotulo>
-            <Text className="mt-2 text-2xl font-bold" style={{ color: cores.texto }}>
+            <Text
+              className="mt-2 font-serif text-3xl font-bold"
+              style={{ color: cores.texto }}
+            >
               {String(contador.diasNoPais)}
             </Text>
             <Text className="mt-1 text-caption leading-4" style={{ color: cores.texto3 }}>
@@ -241,7 +220,7 @@ export default function Inicio() {
           <Card nivel={1} className="flex-1 p-4">
             <Rotulo>bloco 90/180</Rotulo>
             <Text
-              className="mt-2 text-2xl font-bold"
+              className="mt-2 font-serif text-3xl font-bold"
               style={{
                 color: contador.noLimiteSchengen ? cores.erro : cores.texto,
               }}
@@ -278,54 +257,28 @@ export default function Inicio() {
         </View>
 
         <View className="mt-6 gap-3">
-          <Atalho
+          <LinhaNavegacao
             titulo="Ver meu diagnóstico"
             descricao="As três rotas e por que elas ficaram assim"
+            Icone={Map}
             aoTocar={() => router.push('/resultado')}
           />
-          <Atalho
+          <LinhaNavegacao
             titulo="Refazer questionário"
             descricao="Seu perfil mudou? Recalcule em 2 minutos"
+            Icone={RefreshCw}
             aoTocar={() => {
               router.push('/questionario');
             }}
           />
-          <Atalho
+          <LinhaNavegacao
             titulo="Gerenciar acesso"
             descricao="Assinatura e cancelamento"
+            Icone={CreditCard}
             aoTocar={() => router.push('/pagamento')}
           />
         </View>
       </ScrollView>
     </Tela>
-  );
-}
-
-function Atalho({
-  titulo,
-  descricao,
-  aoTocar,
-}: {
-  titulo: string;
-  descricao: string;
-  aoTocar: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={aoTocar}
-      className="flex-row items-center rounded-xl border p-4 active:opacity-80"
-      style={{ backgroundColor: cores.superficie, borderColor: cores.borda }}
-    >
-      <View className="flex-1 pr-3">
-        <Text className="text-base font-semibold" style={{ color: cores.texto }}>
-          {titulo}
-        </Text>
-        <Text className="mt-0.5 text-caption" style={{ color: cores.texto3 }}>
-          {descricao}
-        </Text>
-      </View>
-      <ChevronRight size={18} color={cores.texto4} />
-    </Pressable>
   );
 }

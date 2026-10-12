@@ -346,4 +346,45 @@ export function agruparPorFase(itens: ItemPlano[]): { fase: FasePlano; nome: str
   }));
 }
 
+/**
+ * O id de um item dentro da lista completa de uma rota.
+ *
+ * É `fase-índice`, onde o índice é o GLOBAL na ordem agrupada por fase — a
+ * mesma ordem que a tela do plano desenha.
+ *
+ * Existe como função única porque duas telas precisam do mesmo número e já
+ * discordavam: a home contava o índice sobre a lista simples, o plano contava
+ * sobre a agrupada. Em rotas com mais de uma fase os ids não batiam, e o
+ * item marcado na home não era o item marcado no plano.
+ */
+export function idDoItem(
+  itens: ItemPlano[],
+  fase: FasePlano,
+  indiceNoGrupo: number,
+  grupos = agruparPorFase(itens)
+): string {
+  const posicaoDoGrupo = grupos.findIndex((g) => g.fase === fase);
+  if (posicaoDoGrupo === -1) return `${fase}-0`;
+
+  const antes = grupos
+    .slice(0, posicaoDoGrupo)
+    .reduce((total, g) => total + g.itens.length, 0);
+
+  return `${fase}-${antes + indiceNoGrupo}`;
+}
+
+/** Quantos itens de uma rota já foram concluídos. Mesma contagem em toda tela. */
+export function contarConcluidos(itens: ItemPlano[], concluidos: string[]): number {
+  const grupos = agruparPorFase(itens);
+  let total = 0;
+
+  for (const grupo of grupos) {
+    grupo.itens.forEach((item, indiceNoGrupo) => {
+      if (concluidos.includes(idDoItem(itens, item.fase, indiceNoGrupo, grupos))) total += 1;
+    });
+  }
+
+  return total;
+}
+
 export const moeda = (v: number) => (v === 0 ? 'Sem custo' : `R$ ${v.toLocaleString('pt-BR')}`);

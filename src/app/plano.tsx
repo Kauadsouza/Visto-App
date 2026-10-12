@@ -56,7 +56,7 @@ export default function Plano() {
           </View>
 
           <Pressable onPress={() => router.replace('/resultado')} className="mt-3 py-1">
-            <Text className="text-caption" style={{ color: cores.verde }}>
+            <Text className="text-caption" style={{ color: cores.marinho }}>
               Trocar de rota
             </Text>
           </Pressable>
@@ -163,14 +163,14 @@ function ItemChecklist({
       className="mt-3 flex-row rounded-xl border p-4 active:opacity-80"
       style={{
         backgroundColor: concluido ? cores.fundo2 : cores.superficie,
-        borderColor: concluido ? cores.bordaVerde : cores.borda,
+        borderColor: concluido ? cores.bordaMarca : cores.borda,
       }}
     >
       <View
         className="mt-0.5 h-6 w-6 items-center justify-center rounded-lg border"
         style={{
-          borderColor: concluido ? cores.verde : cores.bordaForte,
-          backgroundColor: concluido ? cores.verde : 'transparent',
+          borderColor: concluido ? cores.marinho : cores.bordaForte,
+          backgroundColor: concluido ? cores.marinho : 'transparent',
         }}
       >
         {concluido ? <Check size={14} color={cores.texto} /> : null}
@@ -194,7 +194,7 @@ function ItemChecklist({
           <Rotulo>{item.prazo}</Rotulo>
           <Text
             className="text-caption font-semibold"
-            style={{ color: item.custo > 0 ? cores.verde : cores.texto4 }}
+            style={{ color: item.custo > 0 ? cores.marinho : cores.texto4 }}
           >
             {moeda(item.custo)}
           </Text>
@@ -221,14 +221,14 @@ function Paywall({ total, visiveis }: { total: number; visiveis: number }) {
   return (
     <Card
       nivel={2}
-      borda={cores.bordaVerde}
+      borda={cores.bordaMarca}
       className="mt-10 p-6"
     >
       <View
         className="h-11 w-11 items-center justify-center rounded-xl border"
-        style={{ backgroundColor: `${cores.verde}14`, borderColor: cores.bordaVerde }}
+        style={{ backgroundColor: `${cores.marinho}14`, borderColor: cores.bordaMarca }}
       >
-        <Lock size={19} color={cores.verde} />
+        <Lock size={19} color={cores.marinho} />
       </View>
 
       <Text className="mt-4 text-xl font-bold" style={{ color: cores.texto }}>
@@ -261,7 +261,7 @@ function ContadorDias({ contador }: { contador: ReturnType<typeof calcularContad
     <View className="px-6 pt-4">
       <Card nivel={1} className="p-5">
         <View className="flex-row items-center gap-2">
-          <CalendarDays size={15} color={cores.verde} />
+          <CalendarDays size={15} color={cores.marinho} />
           <Rotulo cor={cores.texto2}>seu contador</Rotulo>
         </View>
 
@@ -291,7 +291,7 @@ function ContadorDias({ contador }: { contador: ReturnType<typeof calcularContad
         ) : null}
 
         <Pressable onPress={() => setEditando(!editando)} className="mt-4 py-1">
-          <Text className="text-caption font-semibold" style={{ color: cores.verde }}>
+          <Text className="text-caption font-semibold" style={{ color: cores.marinho }}>
             {editando
               ? 'Fechar'
               : atual
@@ -325,13 +325,13 @@ function ContadorDias({ contador }: { contador: ReturnType<typeof calcularContad
                     onPress={() => setPais(p)}
                     className="rounded-full border px-3 py-1"
                     style={{
-                      borderColor: escolhido ? cores.bordaVerde : cores.borda,
-                      backgroundColor: escolhido ? `${cores.verde}14` : 'transparent',
+                      borderColor: escolhido ? cores.bordaMarca : cores.borda,
+                      backgroundColor: escolhido ? `${cores.marinho}14` : 'transparent',
                     }}
                   >
                     <Text
                       className="text-caption"
-                      style={{ color: escolhido ? cores.verde : cores.texto3 }}
+                      style={{ color: escolhido ? cores.marinho : cores.texto3 }}
                     >
                       {p}
                     </Text>

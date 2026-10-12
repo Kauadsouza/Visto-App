@@ -30,7 +30,15 @@ export interface Mensagem {
   confianca?: number;
 }
 
-export const LIMITE_MENSAGENS_DIA = 5;
+/**
+ * A camada 1 (Assistente) é a vitrine do produto: ela não pode expirar no
+ * meio de uma conversa. Não há cota de mensagens — o que limita é o
+ * `TAMANHO_MAX_INPUT` por mensagem e o Motor local, que não custa nada.
+ *
+ * A cota vive na camada 2 (Consultoria por IA), onde há trabalho de verdade
+ * por trás da resposta.
+ */
+export const LIMITE_MENSAGENS_DIA = Number.POSITIVE_INFINITY;
 export const TAMANHO_MAX_INPUT = 1500;
 
 export interface LimiteUltrapassado {

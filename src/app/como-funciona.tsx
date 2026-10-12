@@ -41,7 +41,7 @@ export default function ComoFunciona() {
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 28, paddingBottom: 40 }}
       >
-        <Rotulo cor={cores.verde}>como funciona</Rotulo>
+        <Rotulo cor={cores.marinho}>como funciona</Rotulo>
         <Text className="mt-2 text-3xl font-bold" style={{ color: cores.texto }}>
           O que o app faz por você
         </Text>
@@ -62,9 +62,9 @@ export default function ComoFunciona() {
             >
               <View
                 className="mr-4 h-6 w-6 items-center justify-center rounded-full"
-                style={{ backgroundColor: `${cores.verde}1F` }}
+                style={{ backgroundColor: `${cores.marinho}1F` }}
               >
-                <Check size={13} color={cores.verde} />
+                <Check size={13} color={cores.marinho} />
               </View>
               <View className="flex-1">
                 <Text

@@ -65,7 +65,7 @@ export default function Callback() {
 
   return (
     <View className="flex-1 items-center justify-center bg-fundo">
-      <ActivityIndicator color={cores.verde} />
+      <ActivityIndicator color={cores.marinho} />
       <Text className="mt-4 text-sm text-texto-2">Concluindo seu login…</Text>
     </View>
   );

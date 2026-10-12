@@ -18,7 +18,7 @@ const SEM_LOGIN = ['onboarding', 'auth'] as const;
  * onboarding e auth, e o resto passa a exigir login.
  */
 const AREA_PUBLICA: readonly string[] = MODO_SEM_BACKEND
-  ? [...SEM_LOGIN, 'questionario', 'resultado', 'plano', 'pagamento', 'como-funciona', 'consultoria', 'conta', '(tabs)', 'index']
+  ? [...SEM_LOGIN, 'questionario', 'resultado', 'plano', 'pagamento', 'como-funciona', 'consultoria', 'consultoria-ia', 'conta', 'chat', '(tabs)', 'index']
   : SEM_LOGIN;
 
 /**
@@ -66,7 +66,7 @@ export function GuardaRota({ children }: { children: React.ReactNode }) {
   if (!hidratado) {
     return (
       <View className="flex-1 items-center justify-center bg-fundo">
-        <ActivityIndicator color={cores.verde} />
+        <ActivityIndicator color={cores.marinho} />
       </View>
     );
   }

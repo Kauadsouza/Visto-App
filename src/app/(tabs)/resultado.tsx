@@ -40,7 +40,7 @@ export default function Resultado() {
             <Pressable
               onPress={() => router.push(temRespostas ? '/questionario' : '/')}
               className="h-14 w-full items-center justify-center rounded-xl border active:opacity-80"
-              style={{ backgroundColor: cores.verde, borderColor: cores.verde }}
+              style={{ backgroundColor: cores.marinho, borderColor: cores.marinho }}
             >
               <Text className="text-base font-semibold" style={{ color: '#FFFFFF' }}>
                 {temRespostas ? 'Continuar questionário' : 'Começar questionário'}
@@ -77,7 +77,7 @@ export default function Resultado() {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: 28, paddingBottom: 40 }}
       >
         <Aviso
           texto="Este resultado é uma estimativa baseada no seu perfil. Não é assessoria jurídica. Consulte um advogado imigracionista para decisão final."
@@ -140,7 +140,7 @@ function CardRota({ rota }: { rota: Rota }) {
   return (
     <Card nivel={1} className="mt-4 p-5">
       <View className="flex-row items-start justify-between gap-3">
-        <Text className="flex-1 text-xl font-bold" style={{ color: cores.texto }}>
+        <Text className="flex-1 font-serif text-xl font-bold" style={{ color: cores.texto }}>
           {rota.nome}
         </Text>
         <Etiqueta texto={rotuloViabilidade[rota.viabilidade]} cor={cor} />
@@ -157,7 +157,7 @@ function CardRota({ rota }: { rota: Rota }) {
         />
       </View>
 
-      <Text className="mt-4 text-sm leading-6" style={{ color: cores.texto2 }}>
+      <Text className="mt-4 text-base leading-7" style={{ color: cores.texto2 }}>
         {rota.resumo}
       </Text>
 
@@ -173,9 +173,9 @@ function CardRota({ rota }: { rota: Rota }) {
           <View key={passo} className="mt-3 flex-row">
             <View
               className="mr-3 h-5 w-5 items-center justify-center rounded-full"
-              style={{ backgroundColor: `${cores.verde}1F` }}
+              style={{ backgroundColor: `${cores.marinho}1F` }}
             >
-              <Text className="text-caption font-bold" style={{ color: cores.verde }}>
+              <Text className="text-caption font-bold" style={{ color: cores.marinho }}>
                 {`${i + 1}`}
               </Text>
             </View>
@@ -190,12 +190,12 @@ function CardRota({ rota }: { rota: Rota }) {
         accessibilityRole="button"
         onPress={() => router.push({ pathname: '/plano', params: { rota: rota.slug } })}
         className="mt-6 flex-row items-center justify-center rounded-xl border py-4 active:opacity-80"
-        style={{ backgroundColor: `${cores.verde}14`, borderColor: cores.bordaVerde }}
+        style={{ backgroundColor: `${cores.marinho}14`, borderColor: cores.bordaMarca }}
       >
-        <Text className="font-semibold" style={{ color: cores.verde }}>
+        <Text className="font-semibold" style={{ color: cores.marinho }}>
           Ver meu plano completo
         </Text>
-        <ChevronRight size={17} color={cores.verde} className="ml-1" />
+        <ChevronRight size={17} color={cores.marinho} className="ml-1" />
       </Pressable>
     </Card>
   );

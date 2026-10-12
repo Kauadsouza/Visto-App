@@ -49,13 +49,13 @@ export default function Onboarding() {
     <Tela>
     <View className="flex-1">
       {/* Topo: progresso em segmentos — mostra quantas etapas faltam */}
-      <View className="flex-row gap-1.5 px-6 pt-5">
+      <View className="flex-row gap-1.5 px-7 pt-5">
         {SLIDES.map((s, i) => (
           <View key={s.titulo} className="flex-1">
             <Barra
               valor={i <= indice ? 100 : 0}
               altura={3}
-              cor={i <= indice ? cores.verde : cores.superficie3}
+              cor={i <= indice ? cores.marinho : cores.superficie3}
             />
           </View>
         ))}
@@ -88,11 +88,14 @@ export default function Onboarding() {
               </Text>
             </View>
 
-            <Text className="text-3xl font-bold" style={{ color: cores.texto }}>
+            <Text
+              className="font-serif text-4xl font-bold"
+              style={{ color: cores.texto }}
+            >
               {titulo}
             </Text>
 
-            <Text className="mt-5 text-base leading-7" style={{ color: cores.texto2 }}>
+            <Text className="mt-5 text-lg leading-8" style={{ color: cores.texto2 }}>
               {texto}
             </Text>
           </View>

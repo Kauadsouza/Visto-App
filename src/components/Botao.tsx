@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, Text, type PressableProps } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View, type PressableProps } from 'react-native';
+import type { LucideIcon } from 'lucide-react-native';
 
 import { cores } from '@/theme';
 
@@ -11,13 +12,17 @@ type Props = Omit<PressableProps, 'children'> & {
   tamanho?: Tamanho;
   carregando?: boolean;
   cheio?: boolean;
+  /** Ícone opcional à esquerda do rótulo. */
+  icone?: LucideIcon;
+  /** Ícone opcional à direita — usado no CTA principal, que aponta adiante. */
+  iconeFim?: LucideIcon;
 };
 
 const FUNDO: Record<Variante, { bg: string; borda: string; texto: string }> = {
-  primario: { bg: cores.verde, borda: cores.verde, texto: '#FFFFFF' },
-  secundario: { bg: cores.superficie2, borda: cores.bordaForte, texto: cores.texto },
-  fantasma: { bg: 'transparent', borda: 'transparent', texto: cores.texto2 },
-  perigo: { bg: 'transparent', borda: '#4A2222', texto: '#F87171' },
+  primario: { bg: cores.marinho, borda: cores.marinhoProfundo, texto: '#FFFFFF' },
+  secundario: { bg: cores.superficie, borda: cores.bordaForte, texto: cores.texto },
+  fantasma: { bg: 'transparent', borda: 'transparent', texto: cores.marinho },
+  perigo: { bg: 'transparent', borda: `${cores.erro}47`, texto: cores.erro },
 };
 
 const ALTURA: Record<Tamanho, string> = { md: 'h-12', lg: 'h-14' };
@@ -29,11 +34,13 @@ export function Botao({
   carregando = false,
   cheio = true,
   disabled,
+  icone: Icone,
+  iconeFim: IconeFim,
   className = '',
   ...resto
 }: Props) {
   const estilo = FUNDO[variante];
-  const ehPrimario = variante === 'primario';
+  const tamanhoIcone = tamanho === 'lg' ? 18 : 16;
 
   return (
     <Pressable
@@ -41,7 +48,7 @@ export function Botao({
       accessibilityState={{ disabled: Boolean(disabled || carregando) }}
       disabled={disabled || carregando}
       className={[
-        'items-center justify-center rounded-xl border active:opacity-80',
+        'flex-row items-center justify-center rounded-xl border active:opacity-80',
         ALTURA[tamanho],
         cheio ? 'w-full' : '',
         disabled && !carregando ? 'opacity-40' : '',
@@ -49,32 +56,40 @@ export function Botao({
       ]
         .filter(Boolean)
         .join(' ')}
-      style={
-        ehPrimario
+      style={[
+        { backgroundColor: estilo.bg, borderColor: estilo.borda },
+        // Sombra só no primário: é o único que precisa parecer clicável em
+        // profundidade. Nos demais, a borda já separa.
+        variante === 'primario'
           ? {
-              // Gradiente de marca. Em modo escuro, ganha sombra sutil de
-              // brilho para parecer vivo; em claro, fica chapado.
-              backgroundColor: cores.verde,
-              borderColor: cores.verdeEscuro,
-              shadowColor: cores.verde,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.35,
-              shadowRadius: 12,
-              elevation: 6,
+              shadowColor: cores.marinho,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.24,
+              shadowRadius: 8,
+              elevation: 3,
             }
-          : { backgroundColor: estilo.bg, borderColor: estilo.borda }
-      }
+          : null,
+      ]}
       {...resto}
     >
       {carregando ? (
         <ActivityIndicator color={estilo.texto} />
       ) : (
-        <Text
-          className="text-base font-semibold tracking-wide"
-          style={{ color: estilo.texto }}
-        >
-          {titulo}
-        </Text>
+        <>
+          {Icone ? (
+            <View className="mr-2">
+              <Icone size={tamanhoIcone} color={estilo.texto} />
+            </View>
+          ) : null}
+          <Text className="text-base font-semibold" style={{ color: estilo.texto }}>
+            {titulo}
+          </Text>
+          {IconeFim ? (
+            <View className="ml-1">
+              <IconeFim size={tamanhoIcone} color={estilo.texto} />
+            </View>
+          ) : null}
+        </>
       )}
     </Pressable>
   );

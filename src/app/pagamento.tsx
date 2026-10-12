@@ -93,7 +93,7 @@ export default function Pagamento() {
           fazer primeiro.
         </Text>
 
-        <Card nivel={2} borda={cores.bordaVerde} className="mt-8 p-6">
+        <Card nivel={2} borda={cores.bordaMarca} className="mt-8 p-6">
           <Rotulo>mensal</Rotulo>
           <View className="mt-2 flex-row items-end justify-between">
             <Text
@@ -117,9 +117,9 @@ export default function Pagamento() {
             <View key={b} className="mb-4 flex-row">
               <View
                 className="mt-0.5 h-5 w-5 items-center justify-center rounded-full"
-                style={{ backgroundColor: `${cores.verde}1F` }}
+                style={{ backgroundColor: `${cores.marinho}1F` }}
               >
-                <Check size={12} color={cores.verde} />
+                <Check size={12} color={cores.marinho} />
               </View>
               <Text
                 className="ml-3 flex-1 text-sm leading-6"
@@ -147,7 +147,7 @@ export default function Pagamento() {
               onPress={() => router.replace('/plano')}
               className="mt-4 py-2"
             >
-              <Text className="text-sm font-semibold" style={{ color: cores.verde }}>
+              <Text className="text-sm font-semibold" style={{ color: cores.marinho }}>
                 Voltar para o meu plano
               </Text>
             </Pressable>
@@ -155,7 +155,7 @@ export default function Pagamento() {
         ) : null}
 
         {assinado ? (
-          <Card nivel={2} borda={cores.bordaVerde} className="mt-8 p-5">
+          <Card nivel={2} borda={cores.bordaMarca} className="mt-8 p-5">
             <Text className="text-base font-semibold" style={{ color: cores.texto }}>
               Sua assinatura está ativa
             </Text>

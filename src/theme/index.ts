@@ -5,49 +5,55 @@
  * lugares em que a cor precisa ser um valor JS e não uma classe: animação,
  * StatusBar, cores de navegação, e os mapas semânticos.
  *
- * A hierarquia de profundidade NÃO usa sombra — em fundo escuro, sombra não
- * aparece. Ela vem de três coisas: cor de fundo, cor de borda e respiro.
+ * Direção: editorial, sobre papel. Azul-marinho carrega a marca, dourado é
+ * reservado para valor e para o selo de consultoria humana. Erro/atenção/info
+ * são semânticos e não mudam de significado.
  *
- * Há dois modos, dark e light. As classes Tailwind em tailwind.config.js
- * usam o prefixo `-escuro` / `-claro` e o app aplica `dark`/`light` na raiz
- * do HTML para alternar. As cores JS abaixo ficam disponíveis para código
- * que não pode ser classe (animações, StyleSheet nativo, etc).
+ * A hierarquia de profundidade vem de três coisas: cor de fundo, cor de
+ * borda e respiro. Sombra existe, mas é sutil — em papel claro ela trabalha;
+ * em papel escuro vira sujeira.
+ *
+ * Há dois modos, dark e light. As classes Tailwind em tailwind.config.js usam
+ * o prefixo `-escuro` / `-claro` e o app aplica `dark`/`light` na raiz do
+ * HTML para alternar. As cores JS abaixo ficam disponíveis para código que
+ * não pode ser classe (animações, StyleSheet nativo, etc).
  */
 
 /**
- * Paleta dark, com tudo o que a UI atual consome. As classes Tailwind em
- * tailwind.config.js cuidam do resto; este objeto é para código que não
- * pode ser classe.
+ * Paleta light — a base. Papel quente, tinta quente, hairlines quentes.
+ * Tudo aqui é pensado para ler em tela de celular com brilho de sol.
  */
 export const cores = {
   // brand
-  verde: '#22C55E',
-  verdeClaro: '#4ADE80',
-  verdeEscuro: '#15803D',
+  marinho: '#1B3A6B',
+  marinhoClaro: '#2F5A9E',
+  marinhoProfundo: '#12294D',
+  dourado: '#C9A227',
+  douradoClaro: '#E3C767',
 
-  // camadas escuras
-  fundo: '#0B0F0C',
-  fundo2: '#101511',
-  superficie: '#161B17',
-  superficie2: '#1E2420',
-  superficie3: '#272E29',
+  // camadas claras
+  fundo: '#FBFAF8',
+  fundo2: '#F5F2EC',
+  superficie: '#FFFFFF',
+  superficie2: '#F2EFE9',
+  superficie3: '#E8E3D9',
 
   // bordas
-  borda: '#252A26',
-  bordaForte: '#3A4039',
-  bordaVerde: '#1F7A3C',
+  borda: '#E5E0D6',
+  bordaForte: '#CFC7B8',
+  bordaMarca: '#B9C6DC',
 
   // texto
-  texto: '#FFFFFF',
-  texto2: '#D6DAD3',
-  texto3: '#9CA39D',
-  texto4: '#6F7671',
+  texto: '#16130F',
+  texto2: '#4A453D',
+  texto3: '#7A746A',
+  texto4: '#A8A196',
 
-  // semânticos
-  atencao: '#F5A524',
-  erro: '#EF4444',
-  info: '#3B82F6',
-  sucesso: '#16A34A',
+  // semânticos — escolhidos para contraste AA sobre papel quente
+  atencao: '#B45309',
+  erro: '#B3261E',
+  info: '#1D4ED8',
+  sucesso: '#15803D',
 } as const;
 
 export type Tema = 'dark' | 'light';
@@ -56,45 +62,53 @@ export type Tema = 'dark' | 'light';
 export type Paleta = Record<keyof typeof cores, string>;
 
 export const paletas: Record<Tema, Paleta> = {
-  dark: cores,
-  light: {
-    verde: '#22C55E',
-    verdeClaro: '#4ADE80',
-    verdeEscuro: '#166534',
-    fundo: '#FAF8F4',
-    fundo2: '#F4F0E8',
-    superficie: '#FFFFFF',
-    superficie2: '#F2EDE3',
-    superficie3: '#E8E1D2',
-    borda: '#E2DAC7',
-    bordaForte: '#C9C0A8',
-    bordaVerde: '#A8D4B0',
-    texto: '#0F1311',
-    texto2: '#3F4541',
-    texto3: '#6A706B',
-    texto4: '#909999',
-    atencao: '#B45309',
-    erro: '#B91C1C',
-    info: '#1D4ED8',
-    sucesso: '#15803D',
+  light: cores,
+  dark: {
+    marinho: '#8FB0E0',
+    marinhoClaro: '#A8C2E8',
+    marinhoProfundo: '#5B87C4',
+    dourado: '#E3C767',
+    douradoClaro: '#F0D98F',
+    fundo: '#141210',
+    fundo2: '#1C1A16',
+    superficie: '#232019',
+    superficie2: '#2C2822',
+    superficie3: '#38332B',
+    borda: '#35302A',
+    bordaForte: '#4C463C',
+    bordaMarca: '#3E5578',
+    texto: '#F7F4EE',
+    texto2: '#D3CCC0',
+    texto3: '#9C9488',
+    texto4: '#6E675E',
+    atencao: '#E0A458',
+    erro: '#E57373',
+    info: '#7EA6E8',
+    sucesso: '#5DBE8A',
   },
 };
 
 export const corTema = {
-  verde: '#22C55E',
-  verdeClaro: '#4ADE80',
-  verdeEscuro: '#15803D',
-  atencao: '#F5A524',
-  erro: '#EF4444',
-  info: '#3B82F6',
+  marinho: '#1B3A6B',
+  marinhoClaro: '#2F5A9E',
+  marinhoProfundo: '#12294D',
+  dourado: '#C9A227',
+  atencao: '#B45309',
+  erro: '#B3261E',
+  info: '#1D4ED8',
 } as const;
 
 export type Viabilidade = 'alta' | 'media' | 'baixa';
 
+/**
+ * Viabilidade é uma escala, não um semáforo. Três tons da mesma família:
+ * quem lê "baixa" não lê uma luz vermelha de alerta, lê um tom mais apagado
+ * da mesma tinta — e entende que é o mesmo sistema, só menos intenso.
+ */
 export const corViabilidade: Record<Viabilidade, string> = {
-  alta: corTema.verde,
-  media: corTema.atencao,
-  baixa: corTema.erro,
+  alta: corTema.marinho,
+  media: '#6E88B0',
+  baixa: '#9AA7BC',
 };
 
 export const rotuloViabilidade: Record<Viabilidade, string> = {
@@ -116,13 +130,13 @@ export function elevacao(tema: Tema, nivel: 0 | 1 | 2 | 3 = 1) {
 
 /**
  * Pega o tema ativo lendo a classe na raiz do app. Web lê o `<html class>`;
- * nativo, com tema fixo escuro, devolve `dark`.
+ * nativo, sem tema do sistema forçado, usa `light` — a paleta base.
  */
 export function temaAtual(): Tema {
   if (typeof document !== 'undefined' && document.documentElement) {
-    return document.documentElement.classList.contains('light') ? 'light' : 'dark';
+    return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
   }
-  return 'dark';
+  return 'light';
 }
 
 /**

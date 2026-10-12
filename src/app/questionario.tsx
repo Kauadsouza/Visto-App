@@ -13,6 +13,7 @@ import { ArrowLeft, Check } from 'lucide-react-native';
 
 import { Botao } from '@/components/Botao';
 import { Tela } from '@/components/Tela';
+import { Rotulo } from '@/components/ui';
 import { PERGUNTAS } from '@/lib/perguntas';
 import { respostaValida, useQuestionario } from '@/store/questionario';
 import { cores } from '@/theme';
@@ -48,7 +49,7 @@ export default function Questionario() {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <View>
-        <View className="flex-row items-center gap-4 px-6 pb-5">
+        <View className="flex-row items-center gap-4 px-7 pb-5">
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Voltar"
@@ -65,7 +66,7 @@ export default function Questionario() {
                 className="h-full rounded-full"
                 style={{
                   width: `${((indice + 1) / PERGUNTAS.length) * 100}%`,
-                  backgroundColor: cores.verde,
+                  backgroundColor: cores.marinho,
                 }}
               />
             </View>
@@ -83,14 +84,18 @@ export default function Questionario() {
       <ScrollView
         ref={scrollRef}
         className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 32 }}
+        contentContainerStyle={{ paddingHorizontal: 28, paddingBottom: 32 }}
         keyboardShouldPersistTaps="handled"
       >
-        <Text className="text-2xl font-bold" style={{ color: cores.texto }}>
+        <Rotulo cor={cores.marinho}>
+          {`pergunta ${indice + 1} de ${PERGUNTAS.length}`}
+        </Rotulo>
+
+        <Text className="mt-3 font-serif text-3xl font-bold" style={{ color: cores.texto }}>
           {pergunta.texto}
         </Text>
         {pergunta.ajuda ? (
-          <Text className="mt-3 text-sm leading-6" style={{ color: cores.texto2 }}>
+          <Text className="mt-3 text-base leading-7" style={{ color: cores.texto2 }}>
             {pergunta.ajuda}
           </Text>
         ) : null}
@@ -108,16 +113,16 @@ export default function Questionario() {
                     onPress={() => responder(pergunta.chave, opcao.valor)}
                     className="flex-row items-center rounded-xl border p-4 active:opacity-80"
                     style={{
-                      borderColor: escolhida ? cores.verde : cores.borda,
-                      backgroundColor: escolhida ? `${cores.verde}14` : cores.superficie,
+                      borderColor: escolhida ? cores.marinho : cores.borda,
+                      backgroundColor: escolhida ? `${cores.marinho}14` : cores.superficie,
                     }}
                   >
                     {/* Marcador à esquerda: dá um alvo de toque maior que o texto */}
                     <View
                       className="mr-3 h-5 w-5 items-center justify-center rounded-full border"
                       style={{
-                        borderColor: escolhida ? cores.verde : cores.bordaForte,
-                        backgroundColor: escolhida ? cores.verde : 'transparent',
+                        borderColor: escolhida ? cores.marinho : cores.bordaForte,
+                        backgroundColor: escolhida ? cores.marinho : 'transparent',
                       }}
                     >
                       {escolhida ? <Check size={12} color={cores.texto} /> : null}

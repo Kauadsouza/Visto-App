@@ -18,6 +18,12 @@ export interface ConsultoriaContratada {
     texto: string;
     criadoEm: number;
   }[];
+  /**
+   * Call agendada com o consultor, em epoch ms. É o entregável que justifica
+   * o preço — sem ela a consultoria humana vira "mensagem", que a camada de IA
+   * já entrega de graça.
+   */
+  callEm: number | null;
 }
 
 interface Estado {
@@ -29,6 +35,8 @@ interface Estado {
     id: string,
     mensagem: { doUsuario: boolean; texto: string }
   ) => void;
+  agendarCall: (id: string, quando: number) => void;
+  cancelarCall: (id: string) => void;
   ativasDoPlano: (slug: string) => ConsultoriaContratada[];
 }
 
@@ -50,6 +58,7 @@ export const useConsultorias = create<Estado>()(
           contratadaEm: Date.now(),
           status: 'ativa',
           mensagens: [],
+          callEm: null,
         };
         set({ ativas: [...get().ativas, nova] });
         return nova;
@@ -78,6 +87,18 @@ export const useConsultorias = create<Estado>()(
                 }
               : c
           ),
+        });
+      },
+
+      agendarCall(id, quando) {
+        set({
+          ativas: get().ativas.map((c) => (c.id === id ? { ...c, callEm: quando } : c)),
+        });
+      },
+
+      cancelarCall(id) {
+        set({
+          ativas: get().ativas.map((c) => (c.id === id ? { ...c, callEm: null } : c)),
         });
       },
 
