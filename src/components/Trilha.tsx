@@ -18,6 +18,15 @@ export interface GrupoTrilha {
 
 type EstadoFase = 'feito' | 'atual' | 'futuro';
 
+/** Nomes curtos para o mapa do topo, onde não cabe o nome inteiro. */
+const ABREVIADO: Partial<Record<FasePlano, string>> = {
+  preparacao: 'Preparação',
+  documentos: 'Documentos',
+  aplicacao: 'Aplicação',
+  aguardando: 'Espera',
+  depois: 'Chegada',
+};
+
 /**
  * A trilha do processo.
  *
@@ -134,7 +143,7 @@ export function Trilha({
                         ? `${feitos} de ${grupo.itens.length} · concluída`
                         : estado === 'atual'
                           ? `${feitos} de ${grupo.itens.length} · você está aqui`
-                          : `${grupo.itens.length} passos`}
+                          : `${grupo.itens.length} ${grupo.itens.length === 1 ? 'passo' : 'passos'}`}
                     </Text>
                   </View>
 
@@ -260,14 +269,19 @@ function MapaFases({
               ) : null}
             </View>
 
+            {/* Altura fixa: sem ela, "Depois de chegar" quebra em duas linhas
+                e o contador de cada fase sai em alturas diferentes, deixando a
+                régua torta. O rótulo encurta; o nome completo está logo abaixo,
+                no marco do trilho. */}
             <Text
               className="mt-2 text-center text-caption font-semibold uppercase"
               style={{
                 color: estado === 'atual' ? cores.marinho : cores.texto4,
+                height: 34,
               }}
               numberOfLines={2}
             >
-              {grupo.nome}
+              {ABREVIADO[grupo.fase] ?? grupo.nome}
             </Text>
             <Text
               className="mt-0.5 text-center text-caption"

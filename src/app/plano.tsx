@@ -63,45 +63,22 @@ export default function Plano() {
   return (
     <Tela>
     <View className="flex-1">
-      <View>
-        <ContadorDias contador={contador} />
-
-        <View className="px-7 pb-5 pt-6">
-          <Rotulo cor={cores.marinho}>sua trilha</Rotulo>
-          <Text className="mt-2 font-serif text-3xl font-bold" style={{ color: cores.texto }}>
+      {/* Resumo fixo no topo: onde eu estou. O contador de dias é informação
+          secundária e vai rolar junto com o resto — fixo, ele comia um terço
+          da tela e espremia justamente a trilha, que é o motivo de vir aqui. */}
+      <View className="px-7 pb-4 pt-6">
+        <Rotulo cor={cores.marinho}>sua trilha</Rotulo>
+        <View className="mt-2 flex-row items-end justify-between">
+          <Text className="font-serif text-3xl font-bold" style={{ color: cores.texto }}>
             {rotuloRota(itens, slug)}
           </Text>
+          <Text className="text-2xl font-bold" style={{ color: cores.marinho }}>
+            {`${Math.round(percentual)}%`}
+          </Text>
+        </View>
 
-          <View className="mt-5 flex-row items-end justify-between">
-            <View>
-              <Text className="text-caption" style={{ color: cores.texto3 }}>
-                {`${concluidos.length} de ${itens.length} passos feitos`}
-              </Text>
-              <Text className="mt-1 text-2xl font-bold" style={{ color: cores.marinho }}>
-                {`${Math.round(percentual)}%`}
-              </Text>
-            </View>
-            {quantoGasto > 0 ? (
-              <View className="items-end">
-                <Text className="text-caption" style={{ color: cores.texto3 }}>
-                  já investido
-                </Text>
-                <Text className="mt-1 text-2xl font-bold" style={{ color: cores.texto }}>
-                  {moeda(quantoGasto)}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-
-          <View className="mt-4">
-            <Barra valor={percentual} altura={6} />
-          </View>
-
-          <Pressable onPress={() => router.replace('/resultado')} className="mt-4 py-1">
-            <Text className="text-caption font-semibold" style={{ color: cores.marinho }}>
-              Trocar de rota
-            </Text>
-          </Pressable>
+        <View className="mt-4">
+          <Barra valor={percentual} altura={6} />
         </View>
       </View>
 
@@ -109,7 +86,28 @@ export default function Plano() {
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 28, paddingBottom: 40 }}
       >
-        <Aviso texto={AVISO_CUSTOS} tom="atencao" Icone={TriangleAlert} />
+        <ContadorDias contador={contador} />
+
+        <View className="mt-6 flex-row items-center justify-between">
+          <Text className="text-caption" style={{ color: cores.texto3 }}>
+            {`${concluidos.length} de ${itens.length} passos feitos`}
+          </Text>
+          {quantoGasto > 0 ? (
+            <Text className="text-caption font-semibold" style={{ color: cores.marinho }}>
+              {`já investido: ${moeda(quantoGasto)}`}
+            </Text>
+          ) : null}
+        </View>
+
+        <Pressable onPress={() => router.replace('/resultado')} className="mt-2 py-1">
+          <Text className="text-caption font-semibold" style={{ color: cores.marinho }}>
+            Trocar de rota
+          </Text>
+          </Pressable>
+
+        <View className="mt-6">
+          <Aviso texto={AVISO_CUSTOS} tom="atencao" Icone={TriangleAlert} />
+        </View>
 
         <View className="mt-6">
           <Trilha
